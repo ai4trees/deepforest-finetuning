@@ -2,7 +2,6 @@
 
 __all__ = ["load_config"]
 
-from argparse import ArgumentParser
 from typing import Any, Type
 
 import tomllib
