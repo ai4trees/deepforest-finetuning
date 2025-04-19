@@ -1,3 +1,5 @@
+"""Conversion of COCO-format bounding boxes to COCO polygons."""
+
 __all__ = ["coco_bbox_to_polygon"]
 
 from typing import List

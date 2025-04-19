@@ -1,3 +1,5 @@
+"""Loading of configuration files."""
+
 __all__ = ["load_config"]
 
 from argparse import ArgumentParser
@@ -32,7 +34,7 @@ def load_config(config_type: Type) -> Any:
     if not args.config:
         raise ValueError("No config file provided. Please provide a relative path to a config file.")
 
-    with open(args.config, "r", encoding="utf-8") as f:
+    with open(args.config, "rb") as f:
         config = from_dict(data_class=config_type, data=tomllib.load(f))
 
     return config

@@ -44,13 +44,10 @@ def annotations_to_coco(annotations: pd.DataFrame, image_path: Union[str, Path])
         image_height = image.height
 
     if "label" in annotations:
-        categories = []
         category_to_id = {}
-        for idx, category in enumerate(annotations.unique()):
-            categories.append({"id": idx, "name": category, "supercategory": category})
+        for idx, category in enumerate(annotations.unique):
             category_to_id[category] = idx
     else:
-        categories = [{"id": 0, "name": "Tree", "supercategory": "Tree"}]
         category_to_id = {"Tree": 0}
 
     coco_annotations = []
@@ -92,7 +89,9 @@ def annotations_to_coco(annotations: pd.DataFrame, image_path: Union[str, Path])
             }
         ],
         "annotations": coco_annotations,
-        "categories": categories,
+        "categories": [
+            {"id": idx, "name": category, "supercategory": category} for category, idx in category_to_id.items()
+        ],
     }
 
     return coco_json

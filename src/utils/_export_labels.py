@@ -1,4 +1,6 @@
-__all__ = ["export_predictions_as_csv"]
+"""Label export."""
+
+__all__ = ["export_labels"]
 
 from typing import List, Optional
 
@@ -6,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 
 
-def export_predictions_as_csv(
+def export_labels(
     pred_df: pd.DataFrame,
     export_path: str,
     column_order: Optional[List[str]] = None,
