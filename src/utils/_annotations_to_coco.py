@@ -1,3 +1,5 @@
+"""Conversion of DeepForest annotations into COCO format."""
+
 __all__ = ["annotations_to_coco"]
 
 from datetime import datetime
