@@ -65,7 +65,6 @@ class ExportConfig:
     """Configuration for label export."""
 
     output_folder: str
-    annotation_format: str = "csv"
     sort_by: Optional[str] = None
     column_order: Optional[List[str]] = None
     index_as_label_suffix: bool = False
