@@ -1,0 +1,29 @@
+name: deepforest
+channels:
+  - conda-forge
+  - nvidia
+  - pyg
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.12
+  - pip=25.0.1
+  - dacite=1.9.2
+  - geojson=3.2.0
+  - geopandas=0.14.4
+  - numpy=1.26.4
+  - pytorch=2.4.1
+  - pytorch-cuda=12.4
+  - pytorch-cluster
+  - pytorch-lightning=2.5.1
+  - pytorch-scatter
+  - rasterio=1.4.2
+  - scikit-learn=1.6.1
+  - seaborn=0.13.2
+  - tifffile=2025.3.30
+  - torchvision=0.19.1
+  - wandb=0.19.9
+  - pip:
+    - pointtorch==0.2.0
+    - pointtree==0.1.0
+    - git+https://github.com/weecology/DeepForest.git
