@@ -9,6 +9,7 @@ dependencies:
   - python=3.12
   - pip=25.0.1
   - dacite=1.9.2
+  - fire=0.7.0
   - geojson=3.2.0
   - geopandas=0.14.4
   - numpy=1.26.4

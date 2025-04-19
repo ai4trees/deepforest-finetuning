@@ -2,6 +2,7 @@ FROM josafatburmeister/pointtree:latest
 
 RUN python -m pip install \
     dacite \
+    fire \
     geojson \
     geopandas \
     rasterio \
