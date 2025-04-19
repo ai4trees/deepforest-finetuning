@@ -1,7 +1,7 @@
 """Preprocessing scripts."""
 
 from functools import partial
-from typing import Callable, Type
+from typing import Any, Callable, Type
 
 import fire
 
@@ -10,7 +10,7 @@ from deepforest_finetuning.preprocessing import project_point_cloud_labels, resc
 from deepforest_finetuning.utils import load_config
 
 
-def preprocessing_step(config_path: str, config_type: Type, script_fn: Callable):
+def preprocessing_step(config_path: str, config_type: Type, script_fn: Callable[[Any], None]):
     """
     Loads the specified config file, parses it based on the given configuration type and then calls the script function
     with the given configuration.

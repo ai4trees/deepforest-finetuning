@@ -63,7 +63,7 @@ def rescale_coco_json_labels(
     return coco_json
 
 
-def rescale_images(config: ImageRescalingConfig):
+def rescale_images(config: ImageRescalingConfig):  # pylint: disable=too-many-locals
     """
     Rescale a set of images and labels to given target resolutions.
     """
