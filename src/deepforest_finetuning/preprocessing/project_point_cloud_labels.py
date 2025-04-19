@@ -1,5 +1,7 @@
 """Projects point cloud tree instance segmentation labels to an orthophoto."""
 
+__all__ = ["project_point_cloud_labels"]
+
 from datetime import datetime
 import json
 import os
@@ -17,14 +19,12 @@ from torch_scatter import scatter_max
 
 sys.path.append(os.path.abspath(os.getcwd()))
 
-from src.utils import coco_bbox_to_polygon, load_pipeline_config
-from src.config._config import PointCloudLabelProjectionConfig
+from deepforest_finetuning.utils import coco_bbox_to_polygon
+from deepforest_finetuning.config import PointCloudLabelProjectionConfig
 
 
-def main():
+def project_point_cloud_labels(config: PointCloudLabelProjectionConfig):
     """Projects point cloud tree instance segmentation labels to an orthophoto."""
-
-    config = load_pipeline_config(PointCloudLabelProjectionConfig)
 
     if not config.image_path.endswith(".tif"):
         raise ValueError("Image must be a geotif file.")
@@ -189,7 +189,3 @@ def main():
 
     with open(config.label_json_output_path, "w", encoding="utf-8") as f:
         json.dump(coco_json, f, indent=4)
-
-
-if __name__ == "__main__":
-    main()

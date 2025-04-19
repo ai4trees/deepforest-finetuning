@@ -20,6 +20,7 @@ jobs:
         run: |
           python -m pip install black
           black src --check --verbose --diff --color --line-length 120
+          black scripts --check --verbose --diff --color --line-length 120
   mypy:
     runs-on: ubuntu-latest
     container:
@@ -35,6 +36,7 @@ jobs:
         shell: bash
         run: |
           cd /github/workspace/
+          python -m pip install .
           mypy . --warn-unused-ignores --show-error-codes --no-incremental
   pylint:
     runs-on: ubuntu-latest
@@ -51,4 +53,6 @@ jobs:
         shell: bash
         run: |
           cd /github/workspace/
-          pylint src --rcfile=.rcfile
+          python -m pip install .
+          pylint src --disable duplicate-code --rcfile=.rcfile
+          pylint scripts --disable duplicate-code --rcfile=.rcfile

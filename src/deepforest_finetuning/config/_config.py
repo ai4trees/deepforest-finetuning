@@ -16,6 +16,8 @@ from typing import List, Optional, Union
 
 @dataclasses.dataclass
 class PointCloudLabelProjectionConfig:
+    """Configuration for projection of point cloud labels to orthophotos."""
+
     point_cloud_path: str
     image_path: str
     label_json_output_path: str
@@ -30,6 +32,8 @@ class PointCloudLabelProjectionConfig:
 
 @dataclasses.dataclass
 class ImageRescalingConfig:
+    """Configuration for image rescaling."""
+
     input_images: Union[List[str], str]
     target_resolutions: List[float]
     input_label_folder: str
@@ -39,6 +43,8 @@ class ImageRescalingConfig:
 
 @dataclasses.dataclass
 class LabelPreprocessingConfig:
+    """Configuration for label preprocessing."""
+
     input_label_folder: str
     output_label_folder: str
     input_image_folder: str
@@ -47,6 +53,8 @@ class LabelPreprocessingConfig:
 
 @dataclasses.dataclass
 class ExportConfig:
+    """Configuration for label export."""
+
     output_folder: str
     annotation_format: str = "csv"
     sort_by: Optional[str] = None
@@ -56,7 +64,9 @@ class ExportConfig:
 
 
 @dataclasses.dataclass
-class TrainingConfig:
+class TrainingConfig:  # pylint: disable=too-many-instance-attributes
+    """Training configuration."""
+
     image_folder: str
     patch_size: int
     patch_overlap: float
@@ -75,6 +85,10 @@ class TrainingConfig:
 
 @dataclasses.dataclass
 class PredictionConfig:
+    """
+    Prediction configuration.
+    """
+
     image_files: List[str]
     predict_tile: bool
     prediction_export: ExportConfig
@@ -85,6 +99,10 @@ class PredictionConfig:
 
 @dataclasses.dataclass
 class EvaluationConfig:
+    """
+    Evaluation configuration.
+    """
+
     prediction_file: str
     label_file: str
     iou_threshold: float

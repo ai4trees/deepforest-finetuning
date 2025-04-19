@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools >=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "deepforest_finetuning"
+version = "0.1.0"
+authors = [
+    {name = "Josafat-Mattias Burmeister", email = "burmeister@uni-potsdam.de"},
+]
+maintainers = [
+    {name = "Josafat-Mattias Burmeister", email = "burmeister@uni-potsdam.de"},
+]
+description = "A Python Package for Fine-Tuning the DeepForest Model on Custom Data."
+readme = "README.md"
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+keywords = ["tree detection", "uav imagery", "deepforest"]
+requires-python = ">=3.12"
+dependencies = [
+    "dacite",
+    "geojson",
+    "geopandas",
+    "numpy",
+    "rasterio",
+    "scikit-learn",
+    "seaborn",
+    "tifffile",
+    "wandb"
+]
+[project.optional-dependencies]
+dev = [
+    "black",
+    "mypy",
+    "pandas-stubs",
+    "pylint",
+    "pytest",
+    "pytest-cov",
+    "scipy-stubs",
+    "types-Pillow",
+]
+
+[project.urls]
+Repository = "https://github.com/ai4trees/deepforest_finetuning.git"
+Issues = "https://github.com/ai4trees/deepforest_finetuning/issues"
+
+[tool.setuptools.package-data]
+pointtree = ["*.typed"]
