@@ -17,13 +17,13 @@ from skimage.filters.rank import modal
 import torch
 from torch_scatter import scatter_max
 
-sys.path.append(os.path.abspath(os.getcwd()))
-
 from deepforest_finetuning.utils import coco_bbox_to_polygon
 from deepforest_finetuning.config import PointCloudLabelProjectionConfig
 
 
-def project_point_cloud_labels(config: PointCloudLabelProjectionConfig):
+def project_point_cloud_labels(  # pylint: disable=too-many-locals, too-many-statements
+    config: PointCloudLabelProjectionConfig,
+):
     """Projects point cloud tree instance segmentation labels to an orthophoto."""
 
     if not config.image_path.endswith(".tif"):
