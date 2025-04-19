@@ -5,7 +5,7 @@ __all__ = ["preprocess_manually_corrected_labels"]
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from deepforest import utilities
 import numpy as np
@@ -61,7 +61,7 @@ def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, to
                     ),
                 ]
 
-                coco_jsons: List[Dict[str, Any]] = []
+                coco_jsons: List[Tuple[Dict[str, Any], str]] = []
                 for target_image_path, file in target_image_paths:
                     with rasterio.open(target_image_path) as image:
                         transform = image.transform
