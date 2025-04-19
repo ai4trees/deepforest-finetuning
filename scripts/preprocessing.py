@@ -10,7 +10,7 @@ from deepforest_finetuning.preprocessing import project_point_cloud_labels, resc
 from deepforest_finetuning.utils import load_config
 
 
-def preprocessing_step(config_path: str, config_type: Type, script_fn: Callable[[Any], None]):
+def preprocessing_step(config_path: str, config_type: Type, script_function: Callable[[Any], None]):
     """
     Loads the specified config file, parses it based on the given configuration type and then calls the script function
     with the given configuration.
@@ -18,11 +18,11 @@ def preprocessing_step(config_path: str, config_type: Type, script_fn: Callable[
     Args:
         config_path: Path of the configuration file to be loaded.
         config_type: Configuration type.
-        script_fn: Callable implementing the preprocessing script to be executed with the given configuration.
+        script_function: Callable implementing the preprocessing script to be executed with the given configuration.
     """
 
     config = load_config(config_path, config_type)
-    script_fn(config)
+    script_function(config)
 
 
 if __name__ == "__main__":
@@ -32,7 +32,9 @@ if __name__ == "__main__":
     ]
     fire_dict = {}
     for step in preprocessing_steps:
-        script_name, script_fn, config_type = step
-        fire_dict[script_name] = partial(preprocessing_step, config_type=config_type, script_fn=script_fn)
+        script_name, script_fn, cfg_type = step
+        fire_dict[script_name] = partial(
+            preprocessing_step, config_type=cfg_type, script_function=script_fn  # type: ignore[script_function]
+        )
 
     fire.Fire(fire_dict)
