@@ -25,5 +25,5 @@ dependencies:
   - wandb=0.19.9
   - pip:
     - pointtorch==0.2.0
-    - pointtree==0.1.0
+    - git+https://github.com/ai4trees/pointtree.git
     - git+https://github.com/weecology/DeepForest.git

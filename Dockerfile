@@ -7,4 +7,5 @@ RUN python -m pip install \
     rasterio \
     seaborn \
     tifffile \
-    git+https://github.com/weecology/DeepForest.git
+    git+https://github.com/weecology/DeepForest.git \
+    git+https://github.com/ai4trees/pointtree.git
