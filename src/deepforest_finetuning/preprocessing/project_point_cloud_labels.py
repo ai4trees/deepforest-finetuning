@@ -4,9 +4,7 @@ __all__ = ["project_point_cloud_labels"]
 
 from datetime import datetime
 import json
-import os
 from pathlib import Path
-import sys
 
 import numpy as np
 from pointtorch import read
