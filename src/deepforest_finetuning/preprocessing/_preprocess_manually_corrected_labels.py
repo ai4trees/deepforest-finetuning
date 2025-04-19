@@ -5,6 +5,7 @@ __all__ = ["preprocess_manually_corrected_labels"]
 import json
 import os
 from pathlib import Path
+from typing import Any, Dict, List
 
 from deepforest import utilities
 import numpy as np
@@ -15,7 +16,9 @@ from deepforest_finetuning.config import ManuallyCorrectedLabelPreprocessingConf
 from deepforest_finetuning.utils import annotations_to_coco
 
 
-def preprocess_manually_corrected_labels(config: ManuallyCorrectedLabelPreprocessingConfig):
+def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, too-many-nested-blocks
+    config: ManuallyCorrectedLabelPreprocessingConfig,
+):
     """Preprocessing of manually corrected labels. This script was used to convert the labels obtained from manually
     correcting DeepForest labels to COCO JSON format. It is not needed for the data provided with the paper since they
     were already preprocessed using this script.
@@ -58,7 +61,7 @@ def preprocess_manually_corrected_labels(config: ManuallyCorrectedLabelPreproces
                     ),
                 ]
 
-                coco_jsons = []
+                coco_jsons: List[Dict[str, Any]] = []
                 for target_image_path, file in target_image_paths:
                     with rasterio.open(target_image_path) as image:
                         transform = image.transform
@@ -99,7 +102,7 @@ def preprocess_manually_corrected_labels(config: ManuallyCorrectedLabelPreproces
                         clipped_annotations.append(annotation)
 
                     annotations = pd.DataFrame(clipped_annotations)
-                    coco_jsons.append(annotations_to_coco(annotations, target_image_path), file)
+                    coco_jsons.append((annotations_to_coco(annotations, target_image_path), file))
             else:
                 coco_jsons = [(annotations_to_coco(annotations, raw_image_path), file)]
 
