@@ -39,7 +39,7 @@ def export_labels(
     if column_order is not None:
         pred_df = pred_df[column_order]
 
-    if isinstance(export_path, Path):
+    if isinstance(export_path, str):
         export_path = Path(export_path)
 
     export_path.parent.mkdir(exist_ok=True, parents=False)

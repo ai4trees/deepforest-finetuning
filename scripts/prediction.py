@@ -15,7 +15,7 @@ def prediction_script(config_path: str):
 
     # loading model
     if config.checkpoint_path is not None:
-        model = main.load_from_checkpoint(config.checkpoint_path)
+        model = main.deepforest().load_from_checkpoint(config.checkpoint_path)
     else:
         model = main.deepforest()
         model.use_release()
