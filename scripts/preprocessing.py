@@ -34,7 +34,7 @@ if __name__ == "__main__":
     for step in preprocessing_steps:
         script_name, script_fn, cfg_type = step
         fire_dict[script_name] = partial(
-            preprocessing_step, config_type=cfg_type, script_function=script_fn  # type: ignore[script_function]
+            preprocessing_step, config_type=cfg_type, script_function=script_fn  # type: ignore[arg-type]
         )
 
     fire.Fire(fire_dict)
