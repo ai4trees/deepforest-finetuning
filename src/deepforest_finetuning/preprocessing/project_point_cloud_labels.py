@@ -46,7 +46,7 @@ def project_point_cloud_labels(  # pylint: disable=too-many-locals, too-many-sta
 
     if (
         point_cloud["instance_id_prediction"].min() != 0
-        or point_cloud["instance_id_prediction"].max() != len(point_cloud["instance_id_prediction"].unique) - 1
+        or point_cloud["instance_id_prediction"].max() != len(point_cloud["instance_id_prediction"].unique()) - 1
     ):
         raise ValueError("The predicted instance IDs must be continuous, starting from zero.")
 
