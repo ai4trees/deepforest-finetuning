@@ -49,6 +49,7 @@ dev = [
     "pytest-cov",
     "scipy-stubs",
     "types-Pillow",
+    "types-tqdm",
 ]
 
 [project.urls]

@@ -36,7 +36,7 @@ jobs:
         shell: bash
         run: |
           cd /github/workspace/
-          python -m pip install .
+          python -m pip install .[dev]
           python -m pip install --force-reinstall git+https://github.com/ai4trees/pointtorch.git
           python -m pip install --force-reinstall git+https://github.com/ai4trees/pointtree.git
           mypy . --warn-unused-ignores --show-error-codes --no-incremental
@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           cd /github/workspace/
-          python -m pip install .
+          python -m pip install .[dev]
           python -m pip install --force-reinstall git+https://github.com/ai4trees/pointtorch.git
           python -m pip install --force-reinstall git+https://github.com/ai4trees/pointtree.git
           pylint src --disable duplicate-code --rcfile=.rcfile

@@ -2,7 +2,7 @@
 
 __all__ = ["export_labels"]
 
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pathlib import Path
 import pandas as pd
@@ -10,7 +10,7 @@ import pandas as pd
 
 def export_labels(
     pred_df: pd.DataFrame,
-    export_path: str,
+    export_path: Union[str, Path],
     column_order: Optional[List[str]] = None,
     index_as_label_suffix: bool = False,
     sort_by: Optional[str] = None,
@@ -39,6 +39,9 @@ def export_labels(
     if column_order is not None:
         pred_df = pred_df[column_order]
 
-    Path(export_path).parent.mkdir(exist_ok=True, parents=False)
+    if isinstance(export_path, str):
+        export_path = Path(export_path)
+
+    export_path.parent.mkdir(exist_ok=True, parents=False)
     pred_df.to_csv(export_path, index=False)
     print(f">>> Exported predictions to {export_path}.")
