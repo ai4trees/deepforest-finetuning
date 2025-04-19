@@ -16,7 +16,10 @@ from deepforest_finetuning.utils import annotations_to_coco
 
 
 def preprocess_manually_corrected_labels(config: ManuallyCorrectedLabelPreprocessingConfig):
-    """Preprocessing of manually corrected labels."""
+    """Preprocessing of manually corrected labels. This script was used to convert the labels obtained from manually
+    correcting DeepForest labels to COCO JSON format. It is not needed for the data provided with the paper since they
+    were already preprocessed using this script.
+    """
 
     label_folder = Path(config.input_label_folder)
 
