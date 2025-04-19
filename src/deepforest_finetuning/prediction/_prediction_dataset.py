@@ -1,3 +1,5 @@
+"""Prediction dataset."""
+
 __all__ = ["PredictionDataset"]
 
 from pathlib import Path

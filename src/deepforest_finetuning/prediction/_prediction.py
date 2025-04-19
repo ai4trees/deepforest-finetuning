@@ -54,23 +54,23 @@ def prediction(
     print(f"\nRunning predictions for {len(tree_dataset)} image(s)...")
     for img_idx in tqdm(range(len(tree_dataset))):
         if predict_tile:
-            prediction = model.predict_tile(
+            pred = model.predict_tile(
                 image=tree_dataset[img_idx].astype(np.float32),
                 return_plot=False,
                 patch_size=patch_size,
                 patch_overlap=patch_overlap,
             )
         else:
-            prediction = model.predict_image(
+            pred = model.predict_image(
                 image=tree_dataset[img_idx].astype(np.float32),
                 return_plot=False,
             )
         image_name = tree_dataset.__getname__(img_idx)
-        prediction["image_path"] = image_name
-        all_predictions.append(prediction)
+        pred["image_path"] = image_name
+        all_predictions.append(pred)
 
         export_labels(
-            prediction,
+            pred,
             export_path=(Path(export_config.output_folder) / image_name).with_suffix(".csv"),
             column_order=export_config.column_order,
             index_as_label_suffix=export_config.index_as_label_suffix,
