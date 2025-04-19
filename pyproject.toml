@@ -29,6 +29,7 @@ keywords = ["tree detection", "uav imagery", "deepforest"]
 requires-python = ">=3.11"
 dependencies = [
     "dacite",
+    "fire",
     "geojson",
     "geopandas",
     "numpy",
