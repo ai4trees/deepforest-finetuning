@@ -1,13 +1,14 @@
 """Config definitions."""
 
 __all__ = [
-    "PointCloudLabelProjectionConfig",
-    "ImageRescalingConfig",
-    "LabelPreprocessingConfig",
-    "ExportConfig",
-    "TrainingConfig",
-    "PredictionConfig",
     "EvaluationConfig",
+    "ExportConfig",
+    "ImageRescalingConfig",
+    "LabelFilteringConfig",
+    "ManuallyCorrectedLabelPreprocessingConfig",
+    "PointCloudLabelProjectionConfig",
+    "PredictionConfig",
+    "TrainingConfig",
 ]
 
 import dataclasses
@@ -42,12 +43,20 @@ class ImageRescalingConfig:
 
 
 @dataclasses.dataclass
-class LabelPreprocessingConfig:
-    """Configuration for label preprocessing."""
+class ManuallyCorrectedLabelPreprocessingConfig:
+    """Configuration for preprocessing of manually corrected labels."""
 
     input_label_folder: str
     output_label_folder: str
     input_image_folder: str
+
+
+@dataclasses.dataclass
+class LabelFilteringConfig:
+    """Configuration for label preprocessing."""
+
+    input_label_folder: str
+    output_label_folder: str
     iou_threshold: float = 0.4
 
 

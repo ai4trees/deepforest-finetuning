@@ -5,8 +5,18 @@ from typing import Any, Callable, Type
 
 import fire
 
-from deepforest_finetuning.config import PointCloudLabelProjectionConfig, ImageRescalingConfig
-from deepforest_finetuning.preprocessing import project_point_cloud_labels, rescale_images
+from deepforest_finetuning.config import (
+    PointCloudLabelProjectionConfig,
+    ImageRescalingConfig,
+    LabelFilteringConfig,
+    ManuallyCorrectedLabelPreprocessingConfig,
+)
+from deepforest_finetuning.preprocessing import (
+    filter_labels,
+    preprocess_manually_corrected_labels,
+    project_point_cloud_labels,
+    rescale_images,
+)
 from deepforest_finetuning.utils import load_config
 
 
@@ -27,6 +37,12 @@ def preprocessing_step(config_path: str, config_type: Type, script_function: Cal
 
 if __name__ == "__main__":
     preprocessing_steps = [
+        ("filter_labels", filter_labels, LabelFilteringConfig),
+        (
+            "preprocess_manually_corrected_labels",
+            preprocess_manually_corrected_labels,
+            ManuallyCorrectedLabelPreprocessingConfig,
+        ),
         ("project_point_cloud_labels", project_point_cloud_labels, PointCloudLabelProjectionConfig),
         ("rescale_images", rescale_images, ImageRescalingConfig),
     ]
