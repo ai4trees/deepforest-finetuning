@@ -34,9 +34,7 @@ def evaluate(predictions: pd.DataFrame, annotations: pd.DataFrame, iou_threshold
     results["recall"] = results.pop("box_recall")
     results["f1"] = 2 * (results["precision"] * results["recall"]) / (results["precision"] + results["recall"])
 
-    print(
-        f"Precision:\t{results['precision']}\nRecall:\t\t{results['recall']}\nF1:\t\t{results['f1']}"
-    )
+    print(f"Precision:\t{results['precision']}\nRecall:\t\t{results['recall']}\nF1:\t\t{results['f1']}")
 
     metrics = []
     metrics.append({"metric": "precision", "score": results["precision"]})
