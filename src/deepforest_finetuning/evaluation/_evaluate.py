@@ -4,12 +4,15 @@ __all__ = ["evaluate"]
 
 from pathlib import Path
 import warnings
+from typing import Union
 
 from deepforest.evaluate import evaluate_boxes
 import pandas as pd
 
 
-def evaluate(predictions: pd.DataFrame, annotations: pd.DataFrame, iou_threshold: float, output_file: str) -> None:
+def evaluate(
+    predictions: pd.DataFrame, annotations: pd.DataFrame, iou_threshold: float, output_file: Union[str, Path]
+) -> None:
     """
     Evaluates a model's predictions and stores the evaluation metrics as CSV file.
 
