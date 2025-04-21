@@ -35,18 +35,14 @@ def evaluate(predictions: pd.DataFrame, annotations: pd.DataFrame, iou_threshold
     results["f1"] = 2 * (results["precision"] * results["recall"]) / (results["precision"] + results["recall"])
 
     print(
-        "Precision:\t{precision}\nRecall:\t\t{recall}\nF1:\t\t{f1}".format(
-            precision=results["precision"],
-            recall=results["recall"],
-            f1=results["f1"],
-        )
+        f"Precision:\t{results['precision']}\nRecall:\t\t{results['recall']}\nF1:\t\t{results['f1']}"
     )
 
     metrics = []
     metrics.append({"metric": "precision", "score": results["precision"]})
     metrics.append({"metric": "recall", "score": results["recall"]})
     metrics.append({"metric": "f1", "score": results["f1"]})
-    df = pd.DataFrame.from_dict(metrics)
+    df = pd.DataFrame(metrics)
 
     Path(output_file).parent.mkdir(exist_ok=True, parents=True)
 
