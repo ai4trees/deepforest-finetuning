@@ -169,7 +169,7 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
                 image_files = np.unique(image_files)
 
                 export_config = copy.deepcopy(config.prediction_export)
-                export_config.output_folder = Path(export_config.output_folder) / f"{num_epochs}_epochs"
+                export_config.output_folder = str(Path(export_config.output_folder) / f"{num_epochs}_epochs")
                 export_config.output_file_name = f"{prefix}_predictions_seed_{seed}.csv"
 
                 run_prediction(

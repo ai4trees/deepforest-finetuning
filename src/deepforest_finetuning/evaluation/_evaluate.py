@@ -2,8 +2,9 @@
 
 __all__ = ["evaluate"]
 
-from pathlib import Path, Union
+from pathlib import Path
 import warnings
+from typing import Union
 
 from deepforest.evaluate import evaluate_boxes
 import pandas as pd
