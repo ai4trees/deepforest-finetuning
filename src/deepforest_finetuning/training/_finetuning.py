@@ -6,6 +6,7 @@ import copy
 import os
 from pathlib import Path
 import shutil
+from typing import Union
 import uuid
 
 from deepforest import utilities, preprocess
@@ -16,12 +17,16 @@ import torch
 
 from deepforest_finetuning.config import TrainingConfig
 from deepforest_finetuning.evaluation import evaluate
-from deepforest_finetuning.prediction import start_prediction
+from deepforest_finetuning.prediction import prediction as run_prediction
 
 
 def split_images_into_patches(
-    annotations: pd.DataFrame, image_folder: str, output_dir: str, patch_size: int, patch_overlap: float = 0.05
-) -> str:
+    annotations: pd.DataFrame,
+    image_folder: Union[str, Path],
+    output_dir: Union[str, Path],
+    patch_size: int,
+    patch_overlap: float = 0.05,
+) -> Path:
     """
     Splits large images into smaller overlapping patches and updates the annotations accordingly.
 
@@ -40,29 +45,35 @@ def split_images_into_patches(
 
     processed_annotations = []
 
+    if isinstance(image_folder, str):
+        image_folder = Path(image_folder)
+
+    if isinstance(output_dir, str):
+        output_dir = Path(output_dir)
+
     for image_file in annotations["image_path"].unique():
         image_annotations = annotations.loc[annotations["image_path"] == image_file].copy()
         image_annotations["label"] = "Tree"
 
         _ = preprocess.split_raster(
-            path_to_raster=Path(image_folder) / image_file,
+            path_to_raster=image_folder / image_file,
             annotations_file=image_annotations,
             root_dir=image_folder,
             save_dir=output_dir,
             patch_size=patch_size,
             patch_overlap=patch_overlap,
         )
-        label_file_path = str((Path(output_dir) / image_file).with_suffix(".csv"))
+        label_file_path = str((output_dir / image_file).with_suffix(".csv"))
         processed_annotations.append(utilities.read_file(label_file_path, label="Tree"))
 
-    annotations_path = Path(output_dir) / "labels.csv"
+    annotations_path = output_dir / "labels.csv"
     processed_annotations_df = pd.concat(processed_annotations)
     processed_annotations_df.to_csv(annotations_path)
 
     return annotations_path
 
 
-def finetuning(config: TrainingConfig):
+def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-many-statements
     """Fine-tunes the DeepForest model."""
 
     tmp_dir = Path(config.tmp_dir) / str(uuid.uuid4())
@@ -73,7 +84,7 @@ def finetuning(config: TrainingConfig):
 
     splitting_configs = [("train", config.train_annotation_files)]
     if config.pretrain_annotation_files is not None and len(config.pretrain_annotation_files) > 0:
-        splitting_configs.append("pretraining", config.pretrain_annotation_files)
+        splitting_configs.append(("pretraining", config.pretrain_annotation_files))
 
     for prefix, annotation_files in splitting_configs:
         annotations = []
@@ -135,7 +146,7 @@ def finetuning(config: TrainingConfig):
 
             if config.checkpoint_dir is not None:
                 current_model.trainer.save_checkpoint(
-                    Path(config.checkpoint_dir) / f"{current_config.num_epochs}_epochs_seed_{seed}.pl"
+                    Path(config.checkpoint_dir) / f"{current_config.epochs}_epochs_seed_{seed}.pl"
                 )
 
             # evaluate on training and test set
@@ -161,7 +172,7 @@ def finetuning(config: TrainingConfig):
                 export_config.output_folder = Path(export_config.output_folder) / f"{num_epochs}_epochs"
                 export_config.output_file_name = f"{prefix}_predictions_seed_{seed}.csv"
 
-                start_prediction(
+                run_prediction(
                     current_model,
                     image_files=image_files,
                     predict_tile=True,
