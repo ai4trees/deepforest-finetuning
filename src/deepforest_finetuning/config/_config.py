@@ -16,13 +16,14 @@ from typing import List, Optional, Union
 
 
 @dataclasses.dataclass
-class PointCloudLabelProjectionConfig:
+class PointCloudLabelProjectionConfig:  # pylint: disable=too-many-instance-attributes
     """Configuration for projection of point cloud labels to orthophotos."""
 
-    point_cloud_path: str
-    image_path: str
-    label_json_output_path: str
-    label_image_output_path: Optional[str] = None
+    base_dir: str
+    point_cloud_paths: List[str]
+    image_paths: List[str]
+    label_json_output_paths: List[str]
+    label_image_output_paths: Optional[List[str]] = None
     grid_resolution: float = 0.2
     min_tree_height: float = 10
     min_bounding_box_width: float = 2

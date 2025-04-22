@@ -1,0 +1,25 @@
+base_dir = "C:/Users/cgs/Documents/Data/3D-GeoInfo-2025/data/1_base_data"
+point_cloud_paths = [
+    "./point_clouds/s1_p1_small.laz",
+    "./point_clouds/s1_p1_ext_al.laz",
+    "./point_clouds/s1_p2_al.laz",
+    "./point_clouds/s1_p3_al.laz"
+]
+image_paths = [
+    "./images/s1_p1_small.tif",
+    "./images/s1_p1_ext_al.tif",
+    "./images/s1_p2_al.tif",
+    "./images/s1_p3_al.tif"
+]
+label_json_output_paths = [
+    "./labels/automatic_labeling/s1_p1_small_coco.json",
+    "./labels/automatic_labeling/s1_p1_ext_al_coco.json",
+    "./labels/automatic_labeling/s1_p2_al_coco.json",
+    "./labels/automatic_labeling/s1_p3_al_coco.json"
+]
+label_image_output_paths = [
+    "./labels/automatic_labeling/s1_p1_small_labels.tif",
+    "./labels/automatic_labeling/s1_p1_ext_al_labels.tif",
+    "./labels/automatic_labeling/s1_p2_al_labels.tif",
+    "./labels/automatic_labeling/s1_p3_al_labels.tif"
+]
