@@ -20,7 +20,7 @@ from deepforest_finetuning.utils import coco_bbox_to_polygon
 from deepforest_finetuning.config import PointCloudLabelProjectionConfig
 
 
-def project_point_cloud_labels(  # pylint: disable=too-many-locals, too-many-statements
+def project_point_cloud_labels(  # pylint: disable=too-many-locals, too-many-statements, too-many-branches
     config: PointCloudLabelProjectionConfig,
 ):
     """Projects point cloud tree instance segmentation labels to an orthophoto."""
@@ -29,9 +29,11 @@ def project_point_cloud_labels(  # pylint: disable=too-many-locals, too-many-sta
         raise ValueError("point_cloud_paths and image_paths must have the same length.")
     if len(config.point_cloud_paths) != len(config.label_json_output_paths):
         raise ValueError("point_cloud_paths and label_json_output_paths must have the same length.")
-    if config.label_image_output_paths is not None and len(config.label_json_output_paths) != len(config.label_image_output_paths):
+    if config.label_image_output_paths is not None and len(config.label_json_output_paths) != len(
+        config.label_image_output_paths
+    ):
         raise ValueError("label_json_output_paths and label_image_output_paths must have the same length.")
-    
+
     base_dir = Path(config.base_dir)
 
     for idx, point_cloud_path in enumerate(config.point_cloud_paths):
@@ -48,16 +50,22 @@ def project_point_cloud_labels(  # pylint: disable=too-many-locals, too-many-sta
 
             pixel_size = np.abs(np.array([transform[0], transform[4]], dtype=np.float64))
             image_width_meter = image_width * pixel_size[1]
+            image_height_meter = image_height * pixel_size[0]
 
             tile_upper_left_corner = np.array([transform.c, transform.f], dtype=np.float64)
             tile_lower_left_corner = tile_upper_left_corner.copy()
             tile_lower_left_corner[1] -= image.height * pixel_size[1]
 
-        print(f"Loaded geotiff with CRS={crs}, width={image_width}, height={image_height}, pixel_size={pixel_size} m")
+        print(
+            f"Loaded geotiff {image_path.name} with CRS={crs}, width={image_width}, height={image_height}, "
+            + f"pixel_size={pixel_size} m"
+        )
 
         point_cloud = read(base_dir / point_cloud_path)
 
-        point_cloud["instance_id_prediction"] = make_labels_consecutive(  # type: ignore[assignment]
+        print(f"Loaded point cloud {Path(point_cloud_path).name} with {len(point_cloud)} points.")
+
+        point_cloud["instance_id_prediction"] = make_labels_consecutive(
             point_cloud["instance_id_prediction"].to_numpy(), ignore_id=0
         )
 
@@ -71,7 +79,7 @@ def project_point_cloud_labels(  # pylint: disable=too-many-locals, too-many-sta
             np.int64
         )
 
-        label_image_shape = np.ceil(np.array([image_width_meter, image_width_meter]) / config.grid_resolution).astype(
+        label_image_shape = np.ceil(np.array([image_height_meter, image_width_meter]) / config.grid_resolution).astype(
             np.int64
         )
         label_image = np.zeros(label_image_shape, dtype=np.int64)
@@ -119,7 +127,7 @@ def project_point_cloud_labels(  # pylint: disable=too-many-locals, too-many-sta
         # image coordinate system starts in upper left corner and not in lower left
         label_image = np.flip(label_image, axis=0)
 
-        label_image = modal(label_image.astype(np.int8), footprint=np.ones((3, 3), dtype=np.int32)).astype(np.int32)
+        label_image = modal(label_image.astype(np.uint16), footprint=np.ones((3, 3), dtype=np.uint16))
 
         transform = from_origin(
             west=tile_upper_left_corner[0],
@@ -139,7 +147,7 @@ def project_point_cloud_labels(  # pylint: disable=too-many-locals, too-many-sta
                 height=label_image.shape[0],
                 width=label_image.shape[1],
                 count=1,  # number of bands
-                dtype="int64",
+                dtype="uint16",
                 crs=crs,
                 transform=transform,
             ) as dst:
@@ -188,7 +196,9 @@ def project_point_cloud_labels(  # pylint: disable=too-many-locals, too-many-sta
 
         coco_json = {
             "info": {"year": "2024", "version": "1.0.0", "date_created": datetime.today().strftime("%Y-%m-%d")},
-            "licenses": [{"id": 0, "name": "Attribution License", "url": "https://creativecommons.org/licenses/by/4.0/"}],
+            "licenses": [
+                {"id": 0, "name": "Attribution License", "url": "https://creativecommons.org/licenses/by/4.0/"}
+            ],
             "images": [
                 {
                     "id": 0,

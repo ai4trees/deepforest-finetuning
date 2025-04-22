@@ -16,7 +16,7 @@ from typing import List, Optional, Union
 
 
 @dataclasses.dataclass
-class PointCloudLabelProjectionConfig:
+class PointCloudLabelProjectionConfig:  # pylint: disable=too-many-instance-attributes
     """Configuration for projection of point cloud labels to orthophotos."""
 
     base_dir: str
