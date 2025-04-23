@@ -78,6 +78,7 @@ class ExportConfig:
 class TrainingConfig:  # pylint: disable=too-many-instance-attributes
     """Training configuration."""
 
+    base_dir: str
     image_folder: str
     patch_size: int
     patch_overlap: float
@@ -92,6 +93,7 @@ class TrainingConfig:  # pylint: disable=too-many-instance-attributes
     pretrain_learning_rate: Optional[float] = None
     epochs: List[int] = dataclasses.field(default_factory=lambda: [10])
     seeds: list[int] = dataclasses.field(default_factory=lambda: [0, 1, 2, 3, 4])
+    precision: str = "16-mixed"
 
 
 @dataclasses.dataclass
