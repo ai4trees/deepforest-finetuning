@@ -27,9 +27,9 @@ def get_image_size_from_pascal_voc(xml_file_path: Union[str, Path]) -> Tuple[int
     root = tree.getroot()
 
     size = root.find("size")
-    if size is not None:
-        width = int(size.find("width").text)
-        height = int(size.find("height").text)
-        return width, height
-    else:
+    if size is None:
         raise ValueError("No <size> tag found in the XML.")
+
+    width = int(size.find("width").text)  # type: ignore[union-attr, arg-type]
+    height = int(size.find("height").text)  # type: ignore[union-attr, arg-type]
+    return width, height

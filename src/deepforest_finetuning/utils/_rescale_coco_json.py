@@ -4,7 +4,7 @@ __all__ = ["rescale_coco_json"]
 
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -57,6 +57,7 @@ def rescale_coco_json(
             transform = image.transform
             source_pixel_size = np.abs(np.array([transform[0], transform[4]], dtype=np.float64))
     else:
+        source_image_shape = cast(npt.NDArray, source_image_shape)
         source_pixel_size = (target_image_shape / source_image_shape) * target_pixel_size
         source_pixel_size = np.flip(source_pixel_size)
 
