@@ -1,0 +1,4 @@
+base_dir = "C:/Users/cgs/Documents/Data/3D-GeoInfo-2025/data/1_base_data"
+input_label_folder = "./labels/manual_correction"
+output_label_folder = "./labels/manual_correction"
+input_image_folder = "./images"

@@ -1,0 +1,28 @@
+base_dir = "C:/Users/cgs/Documents/Data/3D-GeoInfo-2025/data"
+input_images = [
+    "./1_base_data/images/s1_p1_small.tif",
+    "./1_base_data/images/s1_p1_ext_ml.tif",
+    "./1_base_data/images/s1_p1_ext_mc.tif",
+    "./1_base_data/images/s1_p1_ext_al.tif",
+    "./1_base_data/images/s1_p2_mc.tif",
+    "./1_base_data/images/s1_p2_al.tif",
+    "./1_base_data/images/s1_p3_al.tif",
+    "./1_base_data/images/s2_p1_mc.tif",
+    "./1_base_data/images/s3_p1.tif",
+]
+input_label_folders = [
+    "./1_base_data/labels",
+    "./1_base_data/labels_filtered"
+]
+output_folders = [
+    "2_rescaled_data/2_5_cm/images",
+    "2_rescaled_data/5_cm/images",
+    "2_rescaled_data/7_5_cm/images",
+    "2_rescaled_data/10_cm/images"
+]
+target_resolutions = [
+    0.025,
+    0.05,
+    0.075,
+    0.1
+]
