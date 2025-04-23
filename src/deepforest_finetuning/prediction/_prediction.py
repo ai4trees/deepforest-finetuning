@@ -51,17 +51,17 @@ def prediction(
 
     # predict images
     print(f"\nRunning predictions for {len(tree_dataset)} image(s)...")
-    for img_idx, image in enumerate(tree_dataset):
+    for img_idx in enumerate(len(tree_dataset)):  # pylint: disable=consider-using-enumerate
         if predict_tile:
             pred = model.predict_tile(
-                image=image.astype(np.float32),
+                image=tree_dataset[img_idx].astype(np.float32),
                 return_plot=False,
                 patch_size=patch_size,
                 patch_overlap=patch_overlap,
             )
         else:
             pred = model.predict_image(
-                image=image.astype(np.float32),
+                image=tree_dataset[img_idx].astype(np.float32),
                 return_plot=False,
             )
         image_name = tree_dataset.__getname__(img_idx)

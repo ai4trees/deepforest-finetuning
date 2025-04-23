@@ -60,7 +60,7 @@ class LabelFilteringConfig:
     base_dir: str
     input_label_folder: str
     output_label_folder: str
-    iou_threshold: float = 0.4
+    iou_threshold: float = 0.5
 
 
 @dataclasses.dataclass
@@ -88,7 +88,7 @@ class TrainingConfig:  # pylint: disable=too-many-instance-attributes
     test_annotation_files: List[str]
     prediction_export: ExportConfig
     checkpoint_dir: Optional[str] = None
-    iou_threshold: float = 0.4
+    iou_threshold: float = 0.5
     pretrain_annotation_files: Optional[List[str]] = None
     pretrain_learning_rate: Optional[float] = None
     epochs: List[int] = dataclasses.field(default_factory=lambda: [10])

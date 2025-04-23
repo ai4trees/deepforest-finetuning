@@ -24,7 +24,7 @@ def prediction_script(config_path: str):
         model=model,
         image_files=config.image_files,
         predict_tile=config.predict_tile,
-        export_config=config.export_config,
+        export_config=config.prediction_export,
         patch_size=config.patch_size,
         patch_overlap=config.patch_overlap,
     )
