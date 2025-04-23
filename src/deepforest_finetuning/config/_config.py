@@ -94,6 +94,8 @@ class TrainingConfig:  # pylint: disable=too-many-instance-attributes
     epochs: List[int] = dataclasses.field(default_factory=lambda: [10])
     seeds: list[int] = dataclasses.field(default_factory=lambda: [0, 1, 2, 3, 4])
     precision: str = "16-mixed"
+    float32_matmul_precision: str = "medium"
+    log_dir: str = "./logs"
 
 
 @dataclasses.dataclass

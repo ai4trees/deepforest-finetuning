@@ -164,3 +164,4 @@ data
 **.log
 **.wandb
 lightning_logs/**
+logs/**

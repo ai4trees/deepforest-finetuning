@@ -42,7 +42,6 @@ class PredictionDataset(Dataset):
         Returns: Image data.
         """
         img_path = self.image_files[idx]
-        print(f"Loading image: {img_path}")
         image_array = np.array(imread(img_path))[:, :, :3].astype(np.uint8)
 
         if self.resize_images_to is not None:

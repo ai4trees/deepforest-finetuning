@@ -4,7 +4,6 @@ __all__ = ["split_images_into_patches", "finetuning"]
 
 import copy
 from functools import partial
-import hashlib
 import os
 from pathlib import Path
 import shutil
@@ -16,6 +15,7 @@ from albumentations.pytorch import ToTensorV2
 from deepforest import utilities, preprocess
 from deepforest import main as deepforest_main
 from lightning.pytorch import seed_everything
+from lightning.pytorch.loggers import CSVLogger
 from lightning.pytorch.utilities.seed import isolate_rng
 import numpy as np
 import pandas as pd
@@ -100,7 +100,7 @@ def split_images_into_patches(
         processed_annotations.append(utilities.read_file(label_file_path, label="Tree"))
 
     annotations_path = output_dir / "labels.csv"
-    processed_annotations_df = pd.concat(processed_annotations)
+    processed_annotations_df = pd.concat(processed_annotations, ignore_index=True)
     processed_annotations_df.to_csv(annotations_path)
 
     return annotations_path
@@ -108,6 +108,8 @@ def split_images_into_patches(
 
 def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-many-statements
     """Fine-tunes the DeepForest model."""
+
+    torch.set_float32_matmul_precision(config.float32_matmul_precision)
 
     tmp_dir = Path(config.tmp_dir) / str(uuid.uuid4())
     tmp_dir.mkdir(parents=True, exist_ok=True)
@@ -169,22 +171,26 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
                 if "pretrain" in annotation_files:
                     model.config["train"]["csv_file"] = preprocessed_annotation_files["pretrain"]
                     model.config["train"]["root_dir"] = preprocessed_image_folders["pretrain"]
+                    logger = CSVLogger(config.log_dir, name=f"{num_epochs}_epochs_seed_{seed}_pretraining")
                     model.create_trainer(
                         precision=config.precision if torch.cuda.is_available() else 32,
                         log_every_n_steps=1,
                         benchmark=False,
                         deterministic=True,
+                        logger=logger
                     )
                     model.trainer.fit(model)
 
                 model.config["train"]["lr"] = current_config.learning_rate
                 model.config["train"]["csv_file"] = preprocessed_annotation_files["train"]
                 model.config["train"]["root_dir"] = preprocessed_image_folders["train"]
+                logger = CSVLogger(config.log_dir, name=f"{num_epochs}_epochs_seed_{seed}")
                 model.create_trainer(
                     precision=config.precision if torch.cuda.is_available() else 32,
                     log_every_n_steps=1,
                     benchmark=False,
                     deterministic=True,
+                    logger=logger
                 )
                 model.trainer.fit(model)
 

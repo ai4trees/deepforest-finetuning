@@ -44,4 +44,4 @@ def export_labels(
 
     export_path.parent.mkdir(exist_ok=True, parents=False)
     pred_df.to_csv(export_path, index=False)
-    print(f">>> Exported predictions to {export_path}.")
+    print(f"Exported predictions to {export_path}.")

@@ -14,8 +14,8 @@ def evaluation_script(config_path: str):
 
     config = load_config(config_path, EvaluationConfig)
 
-    prediction = utilities.read_file(config.prediction_file)
-    target = utilities.read_file(config.label_file)
+    prediction = utilities.read_file(config.prediction_file, label="Tree")
+    target = utilities.read_file(config.label_file, label="Tree")
 
     evaluate(prediction, target, config.iou_threshold, config.output_file)
 

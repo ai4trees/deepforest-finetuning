@@ -1,4 +1,4 @@
-name: deepforest
+name: deepforest-env
 channels:
   - conda-forge
   - nvidia

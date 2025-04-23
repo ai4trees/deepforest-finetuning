@@ -7,7 +7,6 @@ from typing import List, Optional
 
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 
 from deepforest_finetuning.config import ExportConfig
 from deepforest_finetuning.utils import export_labels
@@ -52,7 +51,7 @@ def prediction(
 
     # predict images
     print(f"\nRunning predictions for {len(tree_dataset)} image(s)...")
-    for img_idx in tqdm(range(len(tree_dataset))):
+    for img_idx in range(len(tree_dataset)):
         if predict_tile:
             pred = model.predict_tile(
                 image=tree_dataset[img_idx].astype(np.float32),
