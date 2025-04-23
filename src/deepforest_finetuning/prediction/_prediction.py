@@ -51,7 +51,7 @@ def prediction(
 
     # predict images
     print(f"\nRunning predictions for {len(tree_dataset)} image(s)...")
-    for img_idx in enumerate(len(tree_dataset)):  # pylint: disable=consider-using-enumerate
+    for img_idx in range(len(tree_dataset)):  # pylint: disable=consider-using-enumerate
         if predict_tile:
             pred = model.predict_tile(
                 image=tree_dataset[img_idx].astype(np.float32),
