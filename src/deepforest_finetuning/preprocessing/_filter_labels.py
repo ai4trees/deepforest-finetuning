@@ -32,6 +32,9 @@ def filter_bounding_boxed_with_size_based_nms(coco_json: Dict[str, Any], iou_thr
     bounding_boxes = []
     bounding_box_sizes = []
 
+    if len(coco_json["annotations"]) == 0:
+        return coco_json
+
     for annotation in coco_json["annotations"]:
         bounding_box = annotation["bbox"]
         bounding_boxes.append(
@@ -52,7 +55,8 @@ def filter_bounding_boxed_with_size_based_nms(coco_json: Dict[str, Any], iou_thr
 def filter_labels(config: LabelFilteringConfig):
     """Filters labels using non-maximum suppression."""
 
-    label_folder = Path(config.input_label_folder)
+    base_dir = Path(config.base_dir)
+    label_folder = base_dir / config.input_label_folder
 
     subfolders = [file for file in os.listdir(label_folder) if os.path.isdir(os.path.join(label_folder, file))]
 
@@ -66,7 +70,7 @@ def filter_labels(config: LabelFilteringConfig):
                 assert len(coco_json["images"]) == 1
                 coco_json = filter_bounding_boxed_with_size_based_nms(coco_json, iou_threshold=config.iou_threshold)
 
-                output_file_path = Path(config.output_label_folder) / subfolder / file
+                output_file_path = base_dir / config.output_label_folder / subfolder / file
                 output_file_path.parent.mkdir(exist_ok=True, parents=True)
                 with open(output_file_path, "w", encoding="utf-8") as f:
                     json.dump(coco_json, f, indent=4)

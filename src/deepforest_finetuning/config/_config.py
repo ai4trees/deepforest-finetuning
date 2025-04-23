@@ -56,6 +56,7 @@ class ManuallyCorrectedLabelPreprocessingConfig:
 class LabelFilteringConfig:
     """Configuration for label preprocessing."""
 
+    base_dir: str
     input_label_folder: str
     output_label_folder: str
     iou_threshold: float = 0.4
