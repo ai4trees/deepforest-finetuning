@@ -36,10 +36,10 @@ class PointCloudLabelProjectionConfig:  # pylint: disable=too-many-instance-attr
 class ImageRescalingConfig:
     """Configuration for image rescaling."""
 
+    base_dir: str
     input_images: Union[List[str], str]
     target_resolutions: List[float]
     input_label_folder: str
-    label_subfolders: List[str]
     output_folders: List[str]
 
 
@@ -47,6 +47,7 @@ class ImageRescalingConfig:
 class ManuallyCorrectedLabelPreprocessingConfig:
     """Configuration for preprocessing of manually corrected labels."""
 
+    base_dir: str
     input_label_folder: str
     output_label_folder: str
     input_image_folder: str

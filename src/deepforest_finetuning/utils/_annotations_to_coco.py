@@ -3,16 +3,16 @@
 __all__ = ["annotations_to_coco"]
 
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, Any, Union
+from typing import Dict, Any, Optional
 
 import pandas as pd
-import rasterio
 
 from ._coco_bbox_to_polygon import coco_bbox_to_polygon
 
 
-def annotations_to_coco(annotations: pd.DataFrame, image_path: Union[str, Path]) -> Dict[str, Any]:
+def annotations_to_coco(
+    annotations: pd.DataFrame, image_width: int, image_height: int, capture_date: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Converts DeepForest annotations into COCO format.
 
@@ -24,33 +24,26 @@ def annotations_to_coco(annotations: pd.DataFrame, image_path: Union[str, Path])
                 - 'xmax': The x-coordinate of the bottom-right corner of the bounding box.
                 - 'ymax': The y-coordinate of the bottom-right corner of the bounding box.
                 - 'label' or 'class': (Optional) Class label for each annotation.
-        image_path: Path to the image file associated with the annotations. Used to extract image metadata such as width
-            and height.
+        image_width: Width of the input image in pixels.
+        image_height: Height of the input image in pixels.
+        capture_date: Date when the image was captured in :code:`YYYY-MM-DD` format. Defaults to :code:`None`.
 
     Returns:
         A dictionary containing the labels in COCO format.
     """
 
-    if not isinstance(image_path, Path):
-        image_path = Path(image_path)
-
-    # in the image files used in our dataset, the capture date is encoded in the file name
-    if len(image_path.stem) >= 8 and (image_path.stem[:8]).isnumeric():
-        date_prefix = image_path.stem[:8]
-        image_capture_date = f"{date_prefix[:4]}-{date_prefix[4:6]}-{date_prefix[6:]}"
-    else:
-        image_capture_date = ""
-
-    with rasterio.open(image_path) as image:
-        image_width = image.width
-        image_height = image.height
+    if capture_date is None:
+        capture_date = ""
 
     if "label" in annotations:
         category_to_id = {}
-        for idx, category in enumerate(annotations.unique):
+        for idx, category in enumerate(annotations["label"].unique()):
             category_to_id[category] = idx
     else:
         category_to_id = {"Tree": 0}
+
+    assert len(annotations["image_path"].unique()) == 1
+    image_path = annotations["image_path"].iloc[0]
 
     coco_annotations = []
     next_id = 0
@@ -86,8 +79,8 @@ def annotations_to_coco(annotations: pd.DataFrame, image_path: Union[str, Path])
                 "id": 0,
                 "width": image_width,
                 "height": image_height,
-                "file_name": str(image_path),
-                "date_captured": image_capture_date,
+                "file_name": image_path,
+                "date_captured": capture_date,
             }
         ],
         "annotations": coco_annotations,
