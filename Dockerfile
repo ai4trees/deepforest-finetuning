@@ -10,4 +10,4 @@ RUN python -m pip install \
     tifffile \
     git+https://github.com/weecology/DeepForest.git \
     git+https://github.com/ai4trees/pointtree.git \
-    pytorch-lightning==2.5.1
+    lightning==2.5.1

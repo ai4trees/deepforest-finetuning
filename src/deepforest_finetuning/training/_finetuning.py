@@ -177,7 +177,7 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
                         log_every_n_steps=1,
                         benchmark=False,
                         deterministic=True,
-                        logger=logger
+                        logger=logger,
                     )
                     model.trainer.fit(model)
 
@@ -190,7 +190,7 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
                     log_every_n_steps=1,
                     benchmark=False,
                     deterministic=True,
-                    logger=logger
+                    logger=logger,
                 )
                 model.trainer.fit(model)
 
