@@ -15,7 +15,7 @@ from deepforest_finetuning.config import ManuallyCorrectedLabelPreprocessingConf
 from deepforest_finetuning.utils import annotations_to_coco, get_image_size_from_pascal_voc, rescale_coco_json
 
 
-def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, too-many-nested-blocks
+def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, too-many-nested-blocks, too-many-statements
     config: ManuallyCorrectedLabelPreprocessingConfig,
 ):
     """Preprocessing of manually corrected labels. This script was used to convert the labels obtained from manually
@@ -49,10 +49,10 @@ def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, to
 
             image_path = image_name_mapping[image_path]
             annotations["image_path"] = image_path
+            annotations["label"] = "Tree"
 
             target_image_path = base_dir / config.input_image_folder / image_path
 
-            file = Path(file).parent / image_name_mapping[str(Path(file).with_suffix(".tif").name)]
             coco_json = annotations_to_coco(annotations, image_width, image_height, capture_date=capture_date)
             coco_json = rescale_coco_json(
                 coco_json, target_image_path, source_image_shape=np.array([image_height, image_width])
@@ -110,10 +110,11 @@ def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, to
             ):
                 continue
 
-            clipped_x_min = int(max(x_min_meter - target_top_left[0], 0) / target_pixel_size[0])
-            clipped_x_max = int(min(x_max_meter - target_top_left[0], target_width) / target_pixel_size[0])
-            clipped_y_min = int(max(target_top_left[1] - y_min_meter, 0) / target_pixel_size[1])
-            clipped_y_max = int(min(target_top_left[1] - y_max_meter, target_height) / target_pixel_size[1])
+            clipped_x_min = max(int((x_min_meter - target_top_left[0]) / target_pixel_size[0]), 0)
+            clipped_x_max = min(int((x_max_meter - target_top_left[0]) / target_pixel_size[0]), target_width)
+            clipped_y_min = max(int((target_top_left[1] - y_min_meter) / target_pixel_size[1]), 0)
+            clipped_y_max = min(int((target_top_left[1] - y_max_meter) / target_pixel_size[1]), target_height)
+
             clipped_annotation = deepcopy(annotation)
             clipped_annotation["bbox"] = [
                 clipped_x_min,
@@ -133,7 +134,7 @@ def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, to
                 "date_captured": "2023-07-20",
             }
         ]
-        coco_json["annoations"] = clipped_annotation
+        coco_json["annotations"] = clipped_annotations
 
         output_file_path = output_label_folder / "s1_p1_small_coco.json"
         with open(output_file_path, "w", encoding="utf-8") as f:
