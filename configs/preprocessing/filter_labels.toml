@@ -1,4 +1,4 @@
 base_dir = "C:/Users/cgs/Documents/Data/3D-GeoInfo-2025/data/1_base_data"
 input_label_folder = "./labels"
 output_label_folder = "./labels_filtered"
-iou_threshold = 0.4
+iou_threshold = 0.5

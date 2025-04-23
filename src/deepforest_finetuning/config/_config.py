@@ -60,7 +60,7 @@ class LabelFilteringConfig:
     base_dir: str
     input_label_folder: str
     output_label_folder: str
-    iou_threshold: float = 0.4
+    iou_threshold: float = 0.5
 
 
 @dataclasses.dataclass
@@ -78,6 +78,7 @@ class ExportConfig:
 class TrainingConfig:  # pylint: disable=too-many-instance-attributes
     """Training configuration."""
 
+    base_dir: str
     image_folder: str
     patch_size: int
     patch_overlap: float
@@ -87,11 +88,14 @@ class TrainingConfig:  # pylint: disable=too-many-instance-attributes
     test_annotation_files: List[str]
     prediction_export: ExportConfig
     checkpoint_dir: Optional[str] = None
-    iou_threshold: float = 0.4
+    iou_threshold: float = 0.5
     pretrain_annotation_files: Optional[List[str]] = None
     pretrain_learning_rate: Optional[float] = None
     epochs: List[int] = dataclasses.field(default_factory=lambda: [10])
     seeds: list[int] = dataclasses.field(default_factory=lambda: [0, 1, 2, 3, 4])
+    precision: str = "16-mixed"
+    float32_matmul_precision: str = "medium"
+    log_dir: str = "./logs"
 
 
 @dataclasses.dataclass

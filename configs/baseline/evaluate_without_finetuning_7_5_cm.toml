@@ -1,0 +1,4 @@
+prediction_file = "C:/Users/cgs/Documents/Data/3D-GeoInfo-2025/data/4_predictions/7_5_cm/baseline/test_predictions.csv"
+label_file = "C:/Users/cgs/Documents/Data/3D-GeoInfo-2025/data/2_rescaled_data/7_5_cm/labels/manual_labeling/s3_p1_coco.json"
+iou_threshold = 0.5
+output_file = "C:/Users/cgs/Documents/Data/3D-GeoInfo-2025/data/4_predictions/7_5_cm/baseline/test_metrics.csv"

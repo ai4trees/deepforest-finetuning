@@ -9,4 +9,5 @@ RUN python -m pip install \
     seaborn \
     tifffile \
     git+https://github.com/weecology/DeepForest.git \
-    git+https://github.com/ai4trees/pointtree.git
+    git+https://github.com/ai4trees/pointtree.git \
+    lightning==2.5.1

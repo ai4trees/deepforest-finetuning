@@ -164,3 +164,5 @@ data
 **.log
 **.wandb
 lightning_logs/**
+logs/**
+cloth_nodes.txt
