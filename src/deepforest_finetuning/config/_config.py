@@ -39,7 +39,7 @@ class ImageRescalingConfig:
     base_dir: str
     input_images: Union[List[str], str]
     target_resolutions: List[float]
-    input_label_folder: str
+    input_label_folders: List[str]
     output_folders: List[str]
 
 

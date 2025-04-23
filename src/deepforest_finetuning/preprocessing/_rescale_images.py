@@ -33,8 +33,6 @@ def rescale_images(config: ImageRescalingConfig):  # pylint: disable=too-many-lo
 
         image_output_folder = base_dir / output_folder
         image_output_folder.mkdir(exist_ok=True, parents=True)
-        label_output_folder = base_dir / output_folder.replace("images", "labels")
-        label_output_folder.mkdir(exist_ok=True, parents=True)
 
         for original_image_path in image_files:
             target_image_path = image_output_folder / original_image_path.name
@@ -68,22 +66,27 @@ def rescale_images(config: ImageRescalingConfig):  # pylint: disable=too-many-lo
                             resampling=Resampling.bilinear,
                         )
 
-            input_label_folder = base_dir / config.input_label_folder
-            label_subfolders = [x for x in os.listdir(input_label_folder) if os.path.isdir(input_label_folder / x)]
-            for label_subfolder in label_subfolders:
-                label_file_name = f"{original_image_path.stem}_coco.json"
-                label_file = input_label_folder / label_subfolder / label_file_name
+            for folder in config.input_label_folders:
+                input_label_folder = base_dir / folder
 
-                if not label_file.exists():
-                    continue
+                label_output_folder = base_dir / output_folder.replace("images", Path(folder).stem)
+                label_output_folder.mkdir(exist_ok=True, parents=True)
 
-                target_label_path = label_output_folder / label_subfolder / label_file_name
-                target_label_path.parent.mkdir(exist_ok=True, parents=True)
+                label_subfolders = [x for x in os.listdir(input_label_folder) if os.path.isdir(input_label_folder / x)]
+                for label_subfolder in label_subfolders:
+                    label_file_name = f"{original_image_path.stem}_coco.json"
+                    label_file = input_label_folder / label_subfolder / label_file_name
 
-                with open(label_file, "r", encoding="utf-8") as f:
-                    coco_json = json.load(f)
+                    if not label_file.exists():
+                        continue
 
-                coco_json = rescale_coco_json(coco_json, target_image_path, source_image_path=original_image_path)
+                    target_label_path = label_output_folder / label_subfolder / label_file_name
+                    target_label_path.parent.mkdir(exist_ok=True, parents=True)
 
-                with open(target_label_path, "w", encoding="utf-8") as f:
-                    json.dump(coco_json, f, indent=4)
+                    with open(label_file, "r", encoding="utf-8") as f:
+                        coco_json = json.load(f)
+
+                    coco_json = rescale_coco_json(coco_json, target_image_path, source_image_path=original_image_path)
+
+                    with open(target_label_path, "w", encoding="utf-8") as f:
+                        json.dump(coco_json, f, indent=4)

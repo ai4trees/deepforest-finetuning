@@ -10,7 +10,10 @@ input_images = [
     "./1_base_data/images/s2_p1_mc.tif",
     "./1_base_data/images/s3_p1.tif",
 ]
-input_label_folder = "./1_base_data/labels_filtered"
+input_label_folders = [
+    "./1_base_data/labels",
+    "./1_base_data/labels_filtered"
+]
 output_folders = [
     "2_rescaled_data/2_5_cm/images",
     "2_rescaled_data/5_cm/images",
