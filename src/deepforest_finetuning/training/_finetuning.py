@@ -7,7 +7,7 @@ from functools import partial
 import os
 from pathlib import Path
 import shutil
-from typing import Optional, Union
+from typing import List, Optional, Union
 import uuid
 
 import albumentations as A
@@ -108,16 +108,32 @@ def split_images_into_patches(
 
 
 class EvaluationCallBack(Callback):
+    """
+    Callback that evaluates the model after each training epoch.
+
+    Args:
+        config: Training config.
+        seed: Random seed.
+    """
+
     def __init__(self, config: TrainingConfig, seed: int):
         super().__init__()
         self._config = config
         self._base_dir = Path(config.base_dir)
         self._seed = seed
 
-    def on_train_epoch_end(self, trainer: Trainer, model: LightningModule):
+    def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule):
+        """
+        Hook that evaluates the model after each training epoch.
+
+        Args:
+            trainer: PyTorch lightning trainer.
+            pl_module: Model to be evaluated.
+        """
+
         trainer = copy.deepcopy(trainer)
-        model = copy.deepcopy(model)
-        model.trainer = trainer
+        pl_module = copy.deepcopy(pl_module)
+        pl_module.trainer = trainer
         # trainer_state = copy.deepcopy(trainer.state)
         # evaluate on training and test set
         for prefix, annotation_files in [
@@ -145,7 +161,7 @@ class EvaluationCallBack(Callback):
             export_config.output_file_name = f"{prefix}_predictions_seed_{self._seed}.csv"
 
             run_prediction(
-                model,
+                pl_module,
                 image_files=image_files,
                 predict_tile=True,
                 patch_size=self._config.patch_size,
@@ -251,7 +267,7 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
             model.config["train"]["root_dir"] = preprocessed_image_folders["train"]
             logger = CSVLogger(config.log_dir, name=f"{config.epochs}_epochs_seed_{seed}")
 
-            callbacks = [EvaluationCallBack(config, seed)]
+            callbacks: List[Callback] = [EvaluationCallBack(config, seed)]
             if config.checkpoint_dir is not None:
 
                 callbacks.append(
