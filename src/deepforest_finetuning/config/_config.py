@@ -91,7 +91,7 @@ class TrainingConfig:  # pylint: disable=too-many-instance-attributes
     iou_threshold: float = 0.5
     pretrain_annotation_files: Optional[List[str]] = None
     pretrain_learning_rate: Optional[float] = None
-    epochs: List[int] = dataclasses.field(default_factory=lambda: [10])
+    epochs: int = 20
     seeds: list[int] = dataclasses.field(default_factory=lambda: [0, 1, 2, 3, 4])
     precision: str = "16-mixed"
     float32_matmul_precision: str = "medium"
