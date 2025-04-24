@@ -1,4 +1,4 @@
-base_dir = "C:/Users/cgs/Documents/Data/3D-GeoInfo-2025/data"
+base_dir = "G:/3D-GeoInfo-2025/data"
 tmp_dir = "./tmp"
 patch_size = 1000
 patch_overlap = 0.2
@@ -9,7 +9,7 @@ train_annotation_files = [
 test_annotation_files = [
     "./2_rescaled_data/5_cm/labels/manual_labeling/s3_p1_coco.json"
 ]
-epochs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+epochs = 20
 seeds = [0, 1, 2, 3, 4]
 learning_rate = 0.0001
 checkpoint_dir = "./3_checkpoints/5_cm/manual_labeling_ext"

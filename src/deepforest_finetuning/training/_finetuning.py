@@ -7,16 +7,17 @@ from functools import partial
 import os
 from pathlib import Path
 import shutil
-from typing import Optional, Union
+from typing import List, Optional, Union
 import uuid
 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from deepforest import utilities, preprocess
 from deepforest import main as deepforest_main
-from lightning.pytorch import seed_everything
-from lightning.pytorch.loggers import CSVLogger
-from lightning.pytorch.utilities.seed import isolate_rng
+from pytorch_lightning import seed_everything, Trainer, LightningModule
+from pytorch_lightning.callbacks import Callback, ModelCheckpoint
+from pytorch_lightning.loggers import CSVLogger
+from pytorch_lightning.utilities.seed import isolate_rng
 import numpy as np
 import pandas as pd
 import torch
@@ -106,6 +107,87 @@ def split_images_into_patches(
     return annotations_path
 
 
+class EvaluationCallBack(Callback):
+    """
+    Callback that evaluates the model after each training epoch.
+
+    Args:
+        config: Training config.
+        seed: Random seed.
+    """
+
+    def __init__(self, config: TrainingConfig, seed: int):
+        super().__init__()
+        self._config = config
+        self._base_dir = Path(config.base_dir)
+        self._seed = seed
+
+    def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule):
+        """
+        Hook that evaluates the model after each training epoch.
+
+        Args:
+            trainer: PyTorch lightning trainer.
+            pl_module: Model to be evaluated.
+        """
+
+        trainer = copy.deepcopy(trainer)
+        pl_module = copy.deepcopy(pl_module)
+        pl_module.trainer = trainer
+        # trainer_state = copy.deepcopy(trainer.state)
+        # evaluate on training and test set
+        for prefix, annotation_files in [
+            ("train", self._config.train_annotation_files),
+            ("test", self._config.test_annotation_files),
+        ]:
+            image_files = []
+            annotations = []
+            for file_path in annotation_files:
+                current_annotations = utilities.read_file(str(self._base_dir / file_path), label="Tree")
+                annotations.append(current_annotations)
+
+                image_files.extend(
+                    [
+                        self._base_dir / self._config.image_folder / img_file
+                        for img_file in current_annotations["image_path"].unique()
+                    ]
+                )
+            image_files = np.unique(image_files)
+
+            export_config = copy.deepcopy(self._config.prediction_export)
+            export_config.output_folder = str(
+                self._base_dir / export_config.output_folder / f"{trainer.current_epoch + 1}_epochs"
+            )
+            export_config.output_file_name = f"{prefix}_predictions_seed_{self._seed}.csv"
+
+            run_prediction(
+                pl_module,
+                image_files=image_files,
+                predict_tile=True,
+                patch_size=self._config.patch_size,
+                patch_overlap=self._config.patch_overlap,
+                export_config=export_config,
+            )
+
+            prediction = utilities.read_file(
+                str(self._base_dir / export_config.output_folder / f"{prefix}_predictions_seed_{self._seed}.csv"),
+                label="Tree",
+            )
+
+            metrics_file = (
+                self._base_dir
+                / self._config.prediction_export.output_folder
+                / f"{trainer.current_epoch + 1}_epochs"
+                / f"{prefix}_metrics_seed_{self._seed}.csv"
+            )
+            evaluate(
+                prediction,
+                pd.concat(annotations),
+                self._config.iou_threshold,
+                metrics_file,
+            )
+
+
 def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-many-statements
     """Fine-tunes the DeepForest model."""
 
@@ -144,47 +226,33 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
 
     print("\nStarting training ...")
 
-    for num_epochs in config.epochs:
-        for seed in config.seeds:
-            # set seeds for reproducibility
-            seed_everything(seed, workers=True, verbose=True)
+    for seed in config.seeds:
+        # set seeds for reproducibility
+        seed_everything(seed, workers=True, verbose=True)
 
-            with isolate_rng(include_cuda=True):
-                print(f"INFO: Training for {num_epochs} epochs with seed {seed}...")
+        with isolate_rng(include_cuda=True):
+            print(f"INFO: Training for {config.epochs} epochs with seed {seed}...")
 
-                # load model
-                model = deepforest_main.deepforest(transforms=partial(get_transform, seed=seed))
-                model.use_release()
+            # load model
+            model = deepforest_main.deepforest(transforms=partial(get_transform, seed=seed))
+            model.use_release()
 
-                # copy config to avoid overwriting
-                current_config = copy.deepcopy(config)
+            # copy config to avoid overwriting
+            current_config = copy.deepcopy(config)
 
-                # configure model
-                if current_config.pretrain_learning_rate is None:
-                    model.config["train"]["lr"] = current_config.learning_rate
-                else:
-                    model.config["train"]["lr"] = current_config.pretrain_learning_rate
-
-                model.config["train"]["epochs"] = num_epochs
-                model.config["save-snapshot"] = False
-
-                if "pretrain" in annotation_files:
-                    model.config["train"]["csv_file"] = preprocessed_annotation_files["pretrain"]
-                    model.config["train"]["root_dir"] = preprocessed_image_folders["pretrain"]
-                    logger = CSVLogger(config.log_dir, name=f"{num_epochs}_epochs_seed_{seed}_pretraining")
-                    model.create_trainer(
-                        precision=config.precision if torch.cuda.is_available() else 32,
-                        log_every_n_steps=1,
-                        benchmark=False,
-                        deterministic=True,
-                        logger=logger,
-                    )
-                    model.trainer.fit(model)
-
+            # configure model
+            if current_config.pretrain_learning_rate is None:
                 model.config["train"]["lr"] = current_config.learning_rate
-                model.config["train"]["csv_file"] = preprocessed_annotation_files["train"]
-                model.config["train"]["root_dir"] = preprocessed_image_folders["train"]
-                logger = CSVLogger(config.log_dir, name=f"{num_epochs}_epochs_seed_{seed}")
+            else:
+                model.config["train"]["lr"] = current_config.pretrain_learning_rate
+
+            model.config["train"]["epochs"] = config.epochs
+            model.config["save-snapshot"] = False
+
+            if "pretrain" in annotation_files:
+                model.config["train"]["csv_file"] = preprocessed_annotation_files["pretrain"]
+                model.config["train"]["root_dir"] = preprocessed_image_folders["pretrain"]
+                logger = CSVLogger(config.log_dir, name=f"{config.epochs}_epochs_seed_{seed}_pretraining")
                 model.create_trainer(
                     precision=config.precision if torch.cuda.is_available() else 32,
                     log_every_n_steps=1,
@@ -194,59 +262,32 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
                 )
                 model.trainer.fit(model)
 
-                if config.checkpoint_dir is not None:
-                    model.trainer.save_checkpoint(
-                        base_dir / config.checkpoint_dir / f"{num_epochs}_epochs_seed_{seed}.pl"
+            model.config["train"]["lr"] = current_config.learning_rate
+            model.config["train"]["csv_file"] = preprocessed_annotation_files["train"]
+            model.config["train"]["root_dir"] = preprocessed_image_folders["train"]
+            logger = CSVLogger(config.log_dir, name=f"{config.epochs}_epochs_seed_{seed}")
+
+            callbacks: List[Callback] = [EvaluationCallBack(config, seed)]
+            if config.checkpoint_dir is not None:
+
+                callbacks.append(
+                    ModelCheckpoint(
+                        dirpath=base_dir / config.checkpoint_dir,
+                        filename="{epoch}_" + f"seed={seed}",
+                        save_top_k=-1,
+                        every_n_epochs=1,
+                        enable_version_counter=False,
                     )
+                )
 
-                # evaluate on training and test set
-                for prefix, annotation_files in [
-                    ("train", config.train_annotation_files),
-                    ("test", config.test_annotation_files),
-                ]:
-                    image_files = []
-                    annotations = []
-                    for file_path in annotation_files:
-                        current_annotations = utilities.read_file(str(base_dir / file_path), label="Tree")
-                        annotations.append(current_annotations)
-
-                        image_files.extend(
-                            [
-                                base_dir / config.image_folder / img_file
-                                for img_file in current_annotations["image_path"].unique()
-                            ]
-                        )
-                    image_files = np.unique(image_files)
-
-                    export_config = copy.deepcopy(config.prediction_export)
-                    export_config.output_folder = str(base_dir / export_config.output_folder / f"{num_epochs}_epochs")
-                    export_config.output_file_name = f"{prefix}_predictions_seed_{seed}.csv"
-
-                    run_prediction(
-                        model,
-                        image_files=image_files,
-                        predict_tile=True,
-                        patch_size=config.patch_size,
-                        patch_overlap=config.patch_overlap,
-                        export_config=export_config,
-                    )
-
-                    prediction = utilities.read_file(
-                        str(base_dir / export_config.output_folder / f"{prefix}_predictions_seed_{seed}.csv"),
-                        label="Tree",
-                    )
-
-                    metrics_file = (
-                        base_dir
-                        / config.prediction_export.output_folder
-                        / f"{num_epochs}_epochs"
-                        / f"{prefix}_metrics_seed_{seed}.csv"
-                    )
-                    evaluate(
-                        prediction,
-                        pd.concat(annotations),
-                        config.iou_threshold,
-                        metrics_file,
-                    )
+            model.create_trainer(
+                precision=config.precision if torch.cuda.is_available() else 32,
+                log_every_n_steps=1,
+                benchmark=False,
+                deterministic=True,
+                logger=logger,
+                callbacks=callbacks,
+            )
+            model.trainer.fit(model)
 
     shutil.rmtree(tmp_dir)
