@@ -96,6 +96,7 @@ class TrainingConfig:  # pylint: disable=too-many-instance-attributes
     precision: str = "16-mixed"
     float32_matmul_precision: str = "medium"
     log_dir: str = "./logs"
+    early_stopping_patience: Optional[int] = None
 
 
 @dataclasses.dataclass

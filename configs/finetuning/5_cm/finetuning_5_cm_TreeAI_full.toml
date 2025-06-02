@@ -1,0 +1,19 @@
+base_dir = "/mnt/daten/TreeAI/finetuning/for_finetuning/5cm"
+tmp_dir = "./tmp"
+patch_size = 640
+patch_overlap = 0.2
+image_folder = "images"
+train_annotation_files = [
+    "annotations",
+]
+test_annotation_files = [
+    "test_annotations",
+]
+epochs = 20
+seeds = [0, 1, 2, 3, 4]
+learning_rate = 0.0001
+checkpoint_dir = "checkpoints"
+early_stopping_patience = 2  # Set to the number of epochs to wait before stopping, or remove to disable early stopping
+
+[prediction_export]
+output_folder = "predictions"
