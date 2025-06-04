@@ -4,11 +4,11 @@ __all__ = ["PredictionDataset"]
 
 from pathlib import Path
 from typing import List, Optional
+import os
 
 import numpy as np
 import numpy.typing as npt
 from PIL import Image
-import os
 from tifffile import imread
 from torch.utils.data import Dataset
 

@@ -27,13 +27,12 @@ from deepforest_finetuning.evaluation import evaluate
 from deepforest_finetuning.prediction import prediction as run_prediction
 
 
-def get_transform(augment: bool, seed: Optional[int] = None):
+def get_transform(augment: bool):
     """
     Albumentations transformation of bounding boxes.
 
     Args:
         augment: Whether to apply data augmentations.
-        seed: Random seed for data augmentations to ensure reproducibility. Defaults to :code:`None`.
 
     Returns:
         Transforms.
@@ -158,7 +157,9 @@ class EvaluationCallBack(Callback):
         self._base_dir = Path(config.base_dir)
         self._seed = seed
 
-    def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule):
+    def on_train_epoch_end(
+        self, trainer: Trainer, pl_module: LightningModule
+    ):  # pylint: disable=too-many-locals
         """
         Hook that evaluates the model after each training epoch.
 
@@ -285,8 +286,6 @@ def finetuning(
 
     preprocessed_image_folders = {}
     preprocessed_annotation_files = {}
-
-    extracted_train_annotation_files = config.train_annotation_files
 
     # Process annotation file paths for train and pretraining (if available)
     processed_train_files = _process_annotation_paths(
