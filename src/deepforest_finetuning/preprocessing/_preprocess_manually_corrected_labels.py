@@ -57,27 +57,21 @@ def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, to
 
             target_image_path = base_dir / config.input_image_folder / image_path
 
-            coco_json = annotations_to_coco(
-                annotations, image_width, image_height, capture_date=capture_date
-            )
+            coco_json = annotations_to_coco(annotations, image_width, image_height, capture_date=capture_date)
             coco_json = rescale_coco_json(
                 coco_json,
                 target_image_path,
                 source_image_shape=np.array([image_height, image_width]),
             )
 
-            output_file_path = (
-                output_label_folder / f"{Path(image_path).stem}_coco"
-            ).with_suffix(".json")
+            output_file_path = (output_label_folder / f"{Path(image_path).stem}_coco").with_suffix(".json")
             with open(output_file_path, "w", encoding="utf-8") as f:
                 json.dump(coco_json, f, indent=4)
 
     # s1_p1_ext_mc contains labels for a larger tile
     # we crop the part for which we also have fully manually and automatically created labels
     if "s1_p1_ext_mc_coco.json" in os.listdir(output_label_folder):
-        with open(
-            output_label_folder / "s1_p1_ext_mc_coco.json", "r", encoding="utf-8"
-        ) as f:
+        with open(output_label_folder / "s1_p1_ext_mc_coco.json", "r", encoding="utf-8") as f:
             coco_json = json.load(f)
 
         source_image_path = base_dir / config.input_image_folder / "s1_p1_ext_mc.tif"
@@ -86,9 +80,7 @@ def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, to
         with rasterio.open(source_image_path) as image:
             transform = image.transform
 
-            src_pixel_size = np.abs(
-                np.array([transform[0], transform[4]], dtype=np.float64)
-            )
+            src_pixel_size = np.abs(np.array([transform[0], transform[4]], dtype=np.float64))
 
             src_top_left = np.array([transform.c, transform.f], dtype=np.float64)
             src_bottom_left = src_top_left.copy()
@@ -101,9 +93,7 @@ def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, to
             target_width = image.width
             target_height = image.height
 
-            target_pixel_size = np.abs(
-                np.array([transform[0], transform[4]], dtype=np.float64)
-            )
+            target_pixel_size = np.abs(np.array([transform[0], transform[4]], dtype=np.float64))
 
             target_top_left = np.array([transform.c, transform.f], dtype=np.float64)
             target_bottom_left = target_top_left.copy()
@@ -114,15 +104,9 @@ def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, to
         clipped_annotations = []
         for annotation in coco_json["annotations"]:
             x_min_meter = src_top_left[0] + annotation["bbox"][0] * src_pixel_size[0]
-            x_max_meter = (
-                src_top_left[0]
-                + (annotation["bbox"][0] + annotation["bbox"][2]) * src_pixel_size[0]
-            )
+            x_max_meter = src_top_left[0] + (annotation["bbox"][0] + annotation["bbox"][2]) * src_pixel_size[0]
             y_min_meter = src_top_left[1] - annotation["bbox"][1] * src_pixel_size[1]
-            y_max_meter = (
-                src_top_left[1]
-                - (annotation["bbox"][1] + annotation["bbox"][3]) * src_pixel_size[1]
-            )
+            y_max_meter = src_top_left[1] - (annotation["bbox"][1] + annotation["bbox"][3]) * src_pixel_size[1]
 
             if (
                 x_max_meter < target_top_left[0]
@@ -132,16 +116,12 @@ def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, to
             ):
                 continue
 
-            clipped_x_min = max(
-                int((x_min_meter - target_top_left[0]) / target_pixel_size[0]), 0
-            )
+            clipped_x_min = max(int((x_min_meter - target_top_left[0]) / target_pixel_size[0]), 0)
             clipped_x_max = min(
                 int((x_max_meter - target_top_left[0]) / target_pixel_size[0]),
                 target_width,
             )
-            clipped_y_min = max(
-                int((target_top_left[1] - y_min_meter) / target_pixel_size[1]), 0
-            )
+            clipped_y_min = max(int((target_top_left[1] - y_min_meter) / target_pixel_size[1]), 0)
             clipped_y_max = min(
                 int((target_top_left[1] - y_max_meter) / target_pixel_size[1]),
                 target_height,

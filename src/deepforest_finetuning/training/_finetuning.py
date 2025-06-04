@@ -7,7 +7,7 @@ from functools import partial
 import os
 from pathlib import Path
 import shutil
-from typing import List, Optional, Union
+from typing import List, Union
 import uuid
 
 import albumentations as A
@@ -41,17 +41,13 @@ def get_transform(augment: bool):
     if augment:
         transform = A.Compose(
             [A.HorizontalFlip(p=0.5), ToTensorV2()],
-            bbox_params=A.BboxParams(
-                format="pascal_voc", label_fields=["category_ids"]
-            ),
+            bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
         )
 
     else:
         transform = A.Compose(
             [ToTensorV2()],
-            bbox_params=A.BboxParams(
-                format="pascal_voc", label_fields=["category_ids"]
-            ),
+            bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
         )
 
     return transform
@@ -89,9 +85,7 @@ def split_images_into_patches(
         output_dir = Path(output_dir)
 
     for image_file in annotations["image_path"].unique():
-        image_annotations = annotations.loc[
-            annotations["image_path"] == image_file
-        ].copy()
+        image_annotations = annotations.loc[annotations["image_path"] == image_file].copy()
         image_annotations["label"] = "Tree"
 
         _ = preprocess.split_raster(
@@ -157,9 +151,7 @@ class EvaluationCallBack(Callback):
         self._base_dir = Path(config.base_dir)
         self._seed = seed
 
-    def on_train_epoch_end(
-        self, trainer: Trainer, pl_module: LightningModule
-    ):  # pylint: disable=too-many-locals
+    def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule):  # pylint: disable=too-many-locals
         """
         Hook that evaluates the model after each training epoch.
 
@@ -177,12 +169,8 @@ class EvaluationCallBack(Callback):
         original_trainer = trainer
 
         # evaluate on training and test set
-        processed_train_files = _process_annotation_paths(
-            self._base_dir, self._config.train_annotation_files
-        )
-        processed_test_files = _process_annotation_paths(
-            self._base_dir, self._config.test_annotation_files
-        )
+        processed_train_files = _process_annotation_paths(self._base_dir, self._config.train_annotation_files)
+        processed_test_files = _process_annotation_paths(self._base_dir, self._config.test_annotation_files)
 
         for prefix, annotation_files in [
             ("train", processed_train_files),
@@ -191,9 +179,7 @@ class EvaluationCallBack(Callback):
             image_files = []
             annotations = []
             for file_path in annotation_files:
-                current_annotations = utilities.read_file(
-                    str(self._base_dir / file_path), label="Tree"
-                )
+                current_annotations = utilities.read_file(str(self._base_dir / file_path), label="Tree")
                 annotations.append(current_annotations)
 
                 image_files.extend(
@@ -206,13 +192,9 @@ class EvaluationCallBack(Callback):
 
             export_config = copy.deepcopy(self._config.prediction_export)
             export_config.output_folder = str(
-                self._base_dir
-                / export_config.output_folder
-                / f"{trainer.current_epoch + 1}_epochs"
+                self._base_dir / export_config.output_folder / f"{trainer.current_epoch + 1}_epochs"
             )
-            export_config.output_file_name = (
-                f"{prefix}_predictions_seed_{self._seed}.csv"
-            )
+            export_config.output_file_name = f"{prefix}_predictions_seed_{self._seed}.csv"
 
             run_prediction(
                 eval_model,
@@ -224,11 +206,7 @@ class EvaluationCallBack(Callback):
             )
 
             prediction = utilities.read_file(
-                str(
-                    self._base_dir
-                    / export_config.output_folder
-                    / f"{prefix}_predictions_seed_{self._seed}.csv"
-                ),
+                str(self._base_dir / export_config.output_folder / f"{prefix}_predictions_seed_{self._seed}.csv"),
                 label="Tree",
             )
 
@@ -260,16 +238,12 @@ class EvaluationCallBack(Callback):
                     if metric_name == "f1":
                         # Log F1 as val_f1 for early stopping (maximize)
                         # Access callback_metrics directly on the original trainer
-                        original_trainer.callback_metrics[f"val_{metric_name}"] = (
-                            torch.tensor(metric_value)
-                        )
+                        original_trainer.callback_metrics[f"val_{metric_name}"] = torch.tensor(metric_value)
 
                     # Always log inverse F1 as val_loss for compatibility with default early stopping
                     if metric_name == "f1":
                         # For loss, use 1-F1 as val_loss (minimize is better)
-                        original_trainer.callback_metrics["val_loss"] = torch.tensor(
-                            1.0 - metric_value
-                        )
+                        original_trainer.callback_metrics["val_loss"] = torch.tensor(1.0 - metric_value)
 
 
 def finetuning(
@@ -288,20 +262,13 @@ def finetuning(
     preprocessed_annotation_files = {}
 
     # Process annotation file paths for train and pretraining (if available)
-    processed_train_files = _process_annotation_paths(
-        base_dir, config.train_annotation_files
-    )
+    processed_train_files = _process_annotation_paths(base_dir, config.train_annotation_files)
 
     print(processed_train_files)
 
     splitting_configs = [("train", processed_train_files)]
-    if (
-        config.pretrain_annotation_files is not None
-        and len(config.pretrain_annotation_files) > 0
-    ):
-        processed_pretrain_files = _process_annotation_paths(
-            base_dir, config.pretrain_annotation_files
-        )
+    if config.pretrain_annotation_files is not None and len(config.pretrain_annotation_files) > 0:
+        processed_pretrain_files = _process_annotation_paths(base_dir, config.pretrain_annotation_files)
         splitting_configs.append(("pretraining", processed_pretrain_files))
 
     print(f"INFO: Found {len(splitting_configs)} annotation configurations to process.")
@@ -328,9 +295,7 @@ def finetuning(
     print("\nStarting training ...")
 
     if config.early_stopping_patience is not None:
-        print(
-            f"Early stopping enabled with patience of {config.early_stopping_patience} epochs"
-        )
+        print(f"Early stopping enabled with patience of {config.early_stopping_patience} epochs")
 
     for seed in config.seeds:
         # set seeds for reproducibility
@@ -340,9 +305,7 @@ def finetuning(
             print(f"INFO: Training for {config.epochs} epochs with seed {seed}...")
 
             # load model
-            model = deepforest_main.deepforest(
-                transforms=partial(get_transform, seed=seed)
-            )
+            model = deepforest_main.deepforest(transforms=partial(get_transform))
             model.use_release()
 
             # copy config to avoid overwriting
@@ -358,12 +321,8 @@ def finetuning(
             model.config["save-snapshot"] = False
 
             if "pretraining" in preprocessed_annotation_files:
-                model.config["train"]["csv_file"] = preprocessed_annotation_files[
-                    "pretraining"
-                ]
-                model.config["train"]["root_dir"] = preprocessed_image_folders[
-                    "pretraining"
-                ]
+                model.config["train"]["csv_file"] = preprocessed_annotation_files["pretraining"]
+                model.config["train"]["root_dir"] = preprocessed_image_folders["pretraining"]
                 logger = CSVLogger(
                     config.log_dir,
                     name=f"{config.epochs}_epochs_seed_{seed}_pretraining",
@@ -395,9 +354,7 @@ def finetuning(
             model.config["train"]["lr"] = current_config.learning_rate
             model.config["train"]["csv_file"] = preprocessed_annotation_files["train"]
             model.config["train"]["root_dir"] = preprocessed_image_folders["train"]
-            logger = CSVLogger(
-                config.log_dir, name=f"{config.epochs}_epochs_seed_{seed}"
-            )
+            logger = CSVLogger(config.log_dir, name=f"{config.epochs}_epochs_seed_{seed}")
 
             callbacks: List[Callback] = [EvaluationCallBack(config, seed)]
             if config.checkpoint_dir is not None:

@@ -14,9 +14,7 @@ from torchvision.ops import nms
 from deepforest_finetuning.config import LabelFilteringConfig
 
 
-def filter_bounding_boxed_with_size_based_nms(
-    coco_json: Dict[str, Any], iou_threshold: float
-) -> Dict[str, Any]:
+def filter_bounding_boxed_with_size_based_nms(coco_json: Dict[str, Any], iou_threshold: float) -> Dict[str, Any]:
     """
     Applies non-maximum suppression to the bounding boxes, using the box sizes as scores.
 
@@ -65,11 +63,7 @@ def filter_labels(config: LabelFilteringConfig):
     base_dir = Path(config.base_dir)
     label_folder = base_dir / config.input_label_folder
 
-    subfolders = [
-        file
-        for file in os.listdir(label_folder)
-        if os.path.isdir(os.path.join(label_folder, file))
-    ]
+    subfolders = [file for file in os.listdir(label_folder) if os.path.isdir(os.path.join(label_folder, file))]
 
     for subfolder in subfolders:
         for file in os.listdir(label_folder / subfolder):
@@ -79,13 +73,9 @@ def filter_labels(config: LabelFilteringConfig):
                     coco_json = json.load(f)
 
                 assert len(coco_json["images"]) == 1
-                coco_json = filter_bounding_boxed_with_size_based_nms(
-                    coco_json, iou_threshold=config.iou_threshold
-                )
+                coco_json = filter_bounding_boxed_with_size_based_nms(coco_json, iou_threshold=config.iou_threshold)
 
-                output_file_path = (
-                    base_dir / config.output_label_folder / subfolder / file
-                )
+                output_file_path = base_dir / config.output_label_folder / subfolder / file
                 output_file_path.parent.mkdir(exist_ok=True, parents=True)
                 with open(output_file_path, "w", encoding="utf-8") as f:
                     json.dump(coco_json, f, indent=4)

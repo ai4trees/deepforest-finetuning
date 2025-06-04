@@ -98,8 +98,7 @@ def annotations_to_coco(
         ],
         "annotations": coco_annotations,
         "categories": [
-            {"id": idx, "name": category, "supercategory": category}
-            for category, idx in category_to_id.items()
+            {"id": idx, "name": category, "supercategory": category} for category, idx in category_to_id.items()
         ],
     }
 
