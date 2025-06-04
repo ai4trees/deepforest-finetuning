@@ -30,7 +30,7 @@ def evaluate(
         Dictionary containing the evaluation metrics (precision, recall, f1).
     """
 
-    # ignore deprecated warnings from pandas raised by deepforest.IoU (line 113: iou_df = pd.concat(iou_df))
+    # ignore deprecated pandas warnings raised by deepforest.IoU (line 113: iou_df = pd.concat(iou_df))
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         results = evaluate_boxes(
