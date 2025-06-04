@@ -161,10 +161,14 @@ class EvaluationCallBack(Callback):
             pl_module: Model to be evaluated.
         """
 
-        trainer = copy.deepcopy(trainer)
-        pl_module = copy.deepcopy(pl_module)
-        pl_module.trainer = trainer
-        # trainer_state = copy.deepcopy(trainer.state)
+        # Create a copy of the model for evaluation to avoid affecting the training
+        eval_model = copy.deepcopy(pl_module)
+        eval_trainer = copy.deepcopy(trainer)
+        eval_model.trainer = eval_trainer
+        
+        # Keep a reference to the original trainer for logging metrics
+        original_trainer = trainer
+        
         # evaluate on training and test set
         processed_train_files = _process_annotation_paths(self._base_dir, self._config.train_annotation_files)
         processed_test_files = _process_annotation_paths(self._base_dir, self._config.test_annotation_files)
@@ -194,7 +198,7 @@ class EvaluationCallBack(Callback):
             export_config.output_file_name = f"{prefix}_predictions_seed_{self._seed}.csv"
 
             run_prediction(
-                pl_module,
+                eval_model,
                 image_files=image_files,
                 predict_tile=True,
                 patch_size=self._config.patch_size,
@@ -213,12 +217,33 @@ class EvaluationCallBack(Callback):
                 / f"{trainer.current_epoch + 1}_epochs"
                 / f"{prefix}_metrics_seed_{self._seed}.csv"
             )
-            evaluate(
+            metrics = evaluate(
                 prediction,
                 pd.concat(annotations),
                 self._config.iou_threshold,
                 metrics_file,
             )
+            
+            # Log metrics to Lightning logger for each prefix (train/test)
+            # This makes them available for callbacks like EarlyStopping
+            for metric_name, metric_value in metrics.items():
+                # Log with trainer
+                original_trainer.logger.log_metrics(
+                    {f"{prefix}_{metric_name}": metric_value}, 
+                    step=original_trainer.current_epoch
+                )
+                
+                # For test metrics, also log them as validation metrics for EarlyStopping
+                if prefix == "test":
+                    if metric_name == "f1":
+                        # Log F1 as val_f1 for early stopping (maximize)
+                        # Access callback_metrics directly on the original trainer
+                        original_trainer.callback_metrics[f"val_{metric_name}"] = torch.tensor(metric_value)
+                    
+                    # Always log inverse F1 as val_loss for compatibility with default early stopping
+                    if metric_name == "f1":
+                        # For loss, use 1-F1 as val_loss (minimize is better)
+                        original_trainer.callback_metrics["val_loss"] = torch.tensor(1.0 - metric_value)
 
 
 def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-many-statements
@@ -342,12 +367,13 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
                 
             # Add early stopping callback if patience is set
             if config.early_stopping_patience is not None:
+                # We provide both val_loss and val_f1 - let's use val_f1 for early stopping (higher is better)
                 callbacks.append(
                     EarlyStopping(
-                        monitor="val_loss",
+                        monitor="val_f1",  # Use F1 score for early stopping
                         patience=config.early_stopping_patience,
                         verbose=True,
-                        mode="min",
+                        mode="max",  # Higher F1 is better
                     )
                 )
 
