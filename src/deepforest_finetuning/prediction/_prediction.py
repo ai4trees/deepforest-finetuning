@@ -37,9 +37,13 @@ def prediction(
 
     if predict_tile:
         if patch_size is None:
-            raise ValueError("Patch size must be specified when predict_tile is set to True.")
+            raise ValueError(
+                "Patch size must be specified when predict_tile is set to True."
+            )
         if patch_overlap is None:
-            raise ValueError("Patch overlap must be specified when predict_tile is set to True.")
+            raise ValueError(
+                "Patch overlap must be specified when predict_tile is set to True."
+            )
 
     print("\nLoading dataset and model ...")
 
@@ -70,7 +74,9 @@ def prediction(
 
         export_labels(
             pred,
-            export_path=(Path(export_config.output_folder) / image_name).with_suffix(".csv"),
+            export_path=(Path(export_config.output_folder) / image_name).with_suffix(
+                ".csv"
+            ),
             column_order=export_config.column_order,
             index_as_label_suffix=export_config.index_as_label_suffix,
             sort_by=export_config.sort_by,

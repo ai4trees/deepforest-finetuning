@@ -20,7 +20,9 @@ from deepforest_finetuning.preprocessing import (
 from deepforest_finetuning.utils import load_config
 
 
-def preprocessing_step(config_path: str, config_type: Type, script_function: Callable[[Any], None]):
+def preprocessing_step(
+    config_path: str, config_type: Type, script_function: Callable[[Any], None]
+):
     """
     Loads the specified config file, parses it based on the given configuration type and then calls the script function
     with the given configuration.
@@ -43,7 +45,11 @@ if __name__ == "__main__":
             preprocess_manually_corrected_labels,
             ManuallyCorrectedLabelPreprocessingConfig,
         ),
-        ("project_point_cloud_labels", project_point_cloud_labels, PointCloudLabelProjectionConfig),
+        (
+            "project_point_cloud_labels",
+            project_point_cloud_labels,
+            PointCloudLabelProjectionConfig,
+        ),
         ("rescale_images", rescale_images, ImageRescalingConfig),
     ]
     fire_dict = {}

@@ -42,12 +42,17 @@ def get_transform(augment: bool, seed: Optional[int] = None):
     if augment:
         transform = A.Compose(
             [A.HorizontalFlip(p=0.5), ToTensorV2()],
-            bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
+            bbox_params=A.BboxParams(
+                format="pascal_voc", label_fields=["category_ids"]
+            ),
         )
 
     else:
         transform = A.Compose(
-            [ToTensorV2()], bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"])
+            [ToTensorV2()],
+            bbox_params=A.BboxParams(
+                format="pascal_voc", label_fields=["category_ids"]
+            ),
         )
 
     return transform
@@ -85,7 +90,9 @@ def split_images_into_patches(
         output_dir = Path(output_dir)
 
     for image_file in annotations["image_path"].unique():
-        image_annotations = annotations.loc[annotations["image_path"] == image_file].copy()
+        image_annotations = annotations.loc[
+            annotations["image_path"] == image_file
+        ].copy()
         image_annotations["label"] = "Tree"
 
         _ = preprocess.split_raster(
@@ -133,7 +140,6 @@ def _process_annotation_paths(base_dir: Path, annotation_files: List[str]) -> Li
             processed_paths.append(file_path)
             print(f"INFO: Using annotation file {file_path}.")
 
-
     return processed_paths
 
 
@@ -165,14 +171,18 @@ class EvaluationCallBack(Callback):
         eval_model = copy.deepcopy(pl_module)
         eval_trainer = copy.deepcopy(trainer)
         eval_model.trainer = eval_trainer
-        
+
         # Keep a reference to the original trainer for logging metrics
         original_trainer = trainer
-        
+
         # evaluate on training and test set
-        processed_train_files = _process_annotation_paths(self._base_dir, self._config.train_annotation_files)
-        processed_test_files = _process_annotation_paths(self._base_dir, self._config.test_annotation_files)
-        
+        processed_train_files = _process_annotation_paths(
+            self._base_dir, self._config.train_annotation_files
+        )
+        processed_test_files = _process_annotation_paths(
+            self._base_dir, self._config.test_annotation_files
+        )
+
         for prefix, annotation_files in [
             ("train", processed_train_files),
             ("test", processed_test_files),
@@ -180,7 +190,9 @@ class EvaluationCallBack(Callback):
             image_files = []
             annotations = []
             for file_path in annotation_files:
-                current_annotations = utilities.read_file(str(self._base_dir / file_path), label="Tree")
+                current_annotations = utilities.read_file(
+                    str(self._base_dir / file_path), label="Tree"
+                )
                 annotations.append(current_annotations)
 
                 image_files.extend(
@@ -193,9 +205,13 @@ class EvaluationCallBack(Callback):
 
             export_config = copy.deepcopy(self._config.prediction_export)
             export_config.output_folder = str(
-                self._base_dir / export_config.output_folder / f"{trainer.current_epoch + 1}_epochs"
+                self._base_dir
+                / export_config.output_folder
+                / f"{trainer.current_epoch + 1}_epochs"
             )
-            export_config.output_file_name = f"{prefix}_predictions_seed_{self._seed}.csv"
+            export_config.output_file_name = (
+                f"{prefix}_predictions_seed_{self._seed}.csv"
+            )
 
             run_prediction(
                 eval_model,
@@ -207,7 +223,11 @@ class EvaluationCallBack(Callback):
             )
 
             prediction = utilities.read_file(
-                str(self._base_dir / export_config.output_folder / f"{prefix}_predictions_seed_{self._seed}.csv"),
+                str(
+                    self._base_dir
+                    / export_config.output_folder
+                    / f"{prefix}_predictions_seed_{self._seed}.csv"
+                ),
                 label="Tree",
             )
 
@@ -223,30 +243,37 @@ class EvaluationCallBack(Callback):
                 self._config.iou_threshold,
                 metrics_file,
             )
-            
+
             # Log metrics to Lightning logger for each prefix (train/test)
             # This makes them available for callbacks like EarlyStopping
             for metric_name, metric_value in metrics.items():
-                # Log with trainer
-                original_trainer.logger.log_metrics(
-                    {f"{prefix}_{metric_name}": metric_value}, 
-                    step=original_trainer.current_epoch
-                )
-                
+                # Log with trainer if logger is available
+                if original_trainer.logger is not None:
+                    original_trainer.logger.log_metrics(
+                        {f"{prefix}_{metric_name}": metric_value},
+                        step=original_trainer.current_epoch,
+                    )
+
                 # For test metrics, also log them as validation metrics for EarlyStopping
                 if prefix == "test":
                     if metric_name == "f1":
                         # Log F1 as val_f1 for early stopping (maximize)
                         # Access callback_metrics directly on the original trainer
-                        original_trainer.callback_metrics[f"val_{metric_name}"] = torch.tensor(metric_value)
-                    
+                        original_trainer.callback_metrics[f"val_{metric_name}"] = (
+                            torch.tensor(metric_value)
+                        )
+
                     # Always log inverse F1 as val_loss for compatibility with default early stopping
                     if metric_name == "f1":
                         # For loss, use 1-F1 as val_loss (minimize is better)
-                        original_trainer.callback_metrics["val_loss"] = torch.tensor(1.0 - metric_value)
+                        original_trainer.callback_metrics["val_loss"] = torch.tensor(
+                            1.0 - metric_value
+                        )
 
 
-def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-many-statements
+def finetuning(
+    config: TrainingConfig,
+):  # pylint: disable=too-many-locals, too-many-statements
     """Fine-tunes the DeepForest model."""
 
     torch.set_float32_matmul_precision(config.float32_matmul_precision)
@@ -262,13 +289,20 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
     extracted_train_annotation_files = config.train_annotation_files
 
     # Process annotation file paths for train and pretraining (if available)
-    processed_train_files = _process_annotation_paths(base_dir, config.train_annotation_files)
-    
+    processed_train_files = _process_annotation_paths(
+        base_dir, config.train_annotation_files
+    )
+
     print(processed_train_files)
 
     splitting_configs = [("train", processed_train_files)]
-    if config.pretrain_annotation_files is not None and len(config.pretrain_annotation_files) > 0:
-        processed_pretrain_files = _process_annotation_paths(base_dir, config.pretrain_annotation_files)
+    if (
+        config.pretrain_annotation_files is not None
+        and len(config.pretrain_annotation_files) > 0
+    ):
+        processed_pretrain_files = _process_annotation_paths(
+            base_dir, config.pretrain_annotation_files
+        )
         splitting_configs.append(("pretraining", processed_pretrain_files))
 
     print(f"INFO: Found {len(splitting_configs)} annotation configurations to process.")
@@ -293,9 +327,11 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
         )
 
     print("\nStarting training ...")
-    
+
     if config.early_stopping_patience is not None:
-        print(f"Early stopping enabled with patience of {config.early_stopping_patience} epochs")
+        print(
+            f"Early stopping enabled with patience of {config.early_stopping_patience} epochs"
+        )
 
     for seed in config.seeds:
         # set seeds for reproducibility
@@ -305,7 +341,9 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
             print(f"INFO: Training for {config.epochs} epochs with seed {seed}...")
 
             # load model
-            model = deepforest_main.deepforest(transforms=partial(get_transform, seed=seed))
+            model = deepforest_main.deepforest(
+                transforms=partial(get_transform, seed=seed)
+            )
             model.use_release()
 
             # copy config to avoid overwriting
@@ -321,23 +359,30 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
             model.config["save-snapshot"] = False
 
             if "pretraining" in preprocessed_annotation_files:
-                model.config["train"]["csv_file"] = preprocessed_annotation_files["pretraining"]
-                model.config["train"]["root_dir"] = preprocessed_image_folders["pretraining"]
-                logger = CSVLogger(config.log_dir, name=f"{config.epochs}_epochs_seed_{seed}_pretraining")
-                
+                model.config["train"]["csv_file"] = preprocessed_annotation_files[
+                    "pretraining"
+                ]
+                model.config["train"]["root_dir"] = preprocessed_image_folders[
+                    "pretraining"
+                ]
+                logger = CSVLogger(
+                    config.log_dir,
+                    name=f"{config.epochs}_epochs_seed_{seed}_pretraining",
+                )
+
                 # Add pretraining callbacks
                 pretraining_callbacks = []
-                if config.early_stopping:
+                if config.early_stopping_patience is not None:
                     pretraining_callbacks.append(
                         EarlyStopping(
-                            monitor=config.early_stopping_monitor,
-                            min_delta=config.early_stopping_min_delta,
+                            monitor="f1",  # Use F1 score for early stopping
+                            min_delta=0.0,  # Minimum change to qualify as an improvement
                             patience=config.early_stopping_patience,
                             verbose=True,
-                            mode=config.early_stopping_mode,
+                            mode="max",  # Higher F1 is better
                         )
                     )
-                
+
                 model.create_trainer(
                     precision=config.precision if torch.cuda.is_available() else 32,
                     log_every_n_steps=1,
@@ -351,7 +396,9 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
             model.config["train"]["lr"] = current_config.learning_rate
             model.config["train"]["csv_file"] = preprocessed_annotation_files["train"]
             model.config["train"]["root_dir"] = preprocessed_image_folders["train"]
-            logger = CSVLogger(config.log_dir, name=f"{config.epochs}_epochs_seed_{seed}")
+            logger = CSVLogger(
+                config.log_dir, name=f"{config.epochs}_epochs_seed_{seed}"
+            )
 
             callbacks: List[Callback] = [EvaluationCallBack(config, seed)]
             if config.checkpoint_dir is not None:
@@ -364,7 +411,7 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
                         enable_version_counter=False,
                     )
                 )
-                
+
             # Add early stopping callback if patience is set
             if config.early_stopping_patience is not None:
                 # We provide both val_loss and val_f1 - let's use val_f1 for early stopping (higher is better)

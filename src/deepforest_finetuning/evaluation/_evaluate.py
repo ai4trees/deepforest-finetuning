@@ -11,7 +11,10 @@ import pandas as pd
 
 
 def evaluate(
-    predictions: pd.DataFrame, annotations: pd.DataFrame, iou_threshold: float, output_file: Union[str, Path]
+    predictions: pd.DataFrame,
+    annotations: pd.DataFrame,
+    iou_threshold: float,
+    output_file: Union[str, Path],
 ) -> Dict[str, float]:
     """
     Evaluates a model's predictions and stores the evaluation metrics as CSV file.
@@ -22,7 +25,7 @@ def evaluate(
         iou_threshold: Threshold for the IoU between predicted and target bounding boxes at which predicted bounding
             boxes are counted as true positives.
         output_file: Path of the CSV file in which to store the evaluation metrics.
-        
+
     Returns:
         Dictionary containing the evaluation metrics (precision, recall, f1).
     """
@@ -38,9 +41,15 @@ def evaluate(
 
     results["precision"] = results.pop("box_precision")
     results["recall"] = results.pop("box_recall")
-    results["f1"] = 2 * (results["precision"] * results["recall"]) / (results["precision"] + results["recall"])
+    results["f1"] = (
+        2
+        * (results["precision"] * results["recall"])
+        / (results["precision"] + results["recall"])
+    )
 
-    print(f"Precision:\t{results['precision']}\nRecall:\t\t{results['recall']}\nF1:\t\t{results['f1']}")
+    print(
+        f"Precision:\t{results['precision']}\nRecall:\t\t{results['recall']}\nF1:\t\t{results['f1']}"
+    )
 
     metrics = []
     metrics.append({"metric": "precision", "score": results["precision"]})
@@ -51,10 +60,10 @@ def evaluate(
     Path(output_file).parent.mkdir(exist_ok=True, parents=True)
 
     df.to_csv(output_file, index=False)
-    
+
     # Return metrics dictionary for use with Lightning logger
     return {
         "precision": results["precision"],
         "recall": results["recall"],
-        "f1": results["f1"]
+        "f1": results["f1"],
     }
