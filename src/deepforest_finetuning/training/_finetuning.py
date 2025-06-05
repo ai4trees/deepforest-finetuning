@@ -333,11 +333,14 @@ def finetuning(
                 if config.early_stopping_patience is not None:
                     pretraining_callbacks.append(
                         EarlyStopping(
-                            monitor="f1",  # Use F1 score for early stopping
+                            monitor=config.target_metric.replace(
+                                "val_", ""
+                            ),  # Adjust for pretraining where we don't use "val_" prefix
                             min_delta=0.0,  # Minimum change to qualify as an improvement
                             patience=config.early_stopping_patience,
                             verbose=True,
-                            mode="max",  # Higher F1 is better
+                            # Automatically infer mode from the metric name
+                            mode="min" if "loss" in config.target_metric else "max",
                         )
                     )
 
@@ -362,21 +365,24 @@ def finetuning(
                     ModelCheckpoint(
                         dirpath=base_dir / config.checkpoint_dir,
                         filename="{epoch}_" + f"seed={seed}",
-                        save_top_k=-1,
+                        monitor=config.target_metric,
+                        save_top_k=config.save_top_k,
                         every_n_epochs=1,
                         enable_version_counter=False,
+                        # Automatically infer mode from the metric name
+                        mode="min" if "loss" in config.target_metric else "max",
                     )
                 )
 
             # Add early stopping callback if patience is set
             if config.early_stopping_patience is not None:
-                # We provide both val_loss and val_f1 - let's use val_f1 for early stopping (higher is better)
                 callbacks.append(
                     EarlyStopping(
-                        monitor="val_f1",  # Use F1 score for early stopping
+                        monitor=config.target_metric,  # Use configured metric for early stopping
                         patience=config.early_stopping_patience,
                         verbose=True,
-                        mode="max",  # Higher F1 is better
+                        # Automatically infer mode from the metric name
+                        mode="min" if "loss" in config.target_metric else "max",
                     )
                 )
 

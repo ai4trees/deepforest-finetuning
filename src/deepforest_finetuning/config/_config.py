@@ -97,6 +97,8 @@ class TrainingConfig:  # pylint: disable=too-many-instance-attributes
     float32_matmul_precision: str = "medium"
     log_dir: str = "./logs"
     early_stopping_patience: Optional[int] = None
+    save_top_k: int = 1  # Save top k best models based on target_metric
+    target_metric: str = "val_f1"  # Metric to monitor for early stopping and model checkpointing
 
 
 @dataclasses.dataclass

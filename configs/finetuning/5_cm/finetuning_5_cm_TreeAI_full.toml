@@ -14,6 +14,9 @@ seeds = [0, 1, 2, 3, 4]
 learning_rate = 0.0001
 checkpoint_dir = "checkpoints"
 early_stopping_patience = 2  # Set to the number of epochs to wait before stopping, or remove to disable early stopping
+save_top_k = 1  # Save the top k best models based on target_metric
+target_metric = "val_f1"  # Metric to monitor for early stopping and model checkpointing.
+# Mode min/max is inferred from the metric name.
 
 [prediction_export]
 output_folder = "predictions"

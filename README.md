@@ -151,6 +151,8 @@ seeds = [0, 1, 2, 3, 4]
 learning_rate = 0.0001
 checkpoint_dir = "checkpoints"
 early_stopping_patience = 2
+save_top_k = 1
+target_metric = "val_f1"
 ```
 
 This will:
@@ -253,15 +255,17 @@ seeds = [0, 1, 2, 3, 4]
 
 This will train separate models with different weight initializations and report the average performance.
 
-### Early Stopping
+### Early Stopping and Model Checkpointing
 
-To prevent overfitting, you can enable early stopping:
+To prevent overfitting, you can enable early stopping and control model checkpointing:
 
 ```toml
-early_stopping_patience = 2
+early_stopping_patience = 2  # Stop training if performance doesn't improve for this many epochs
+save_top_k = 1  # Save the top k best models based on the target metric
+target_metric = "val_f1"  # Metric to monitor for early stopping and checkpointing
 ```
 
-This will stop training if the validation performance doesn't improve for the specified number of epochs.
+The `mode` (min/max) is automatically inferred from the metric name. Metrics containing "loss" use "min" mode (lower is better), all others use "max" mode (higher is better).
 
 ## License
 
