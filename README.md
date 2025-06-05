@@ -91,7 +91,7 @@ The package supports multiple preprocessing steps:
 
 #### a. Projecting Labels from Point Clouds
 
-If you have 3D point cloud data with tree positions, you can project them to 2D bounding boxes:
+If you have 3D point cloud data with pointwise tree instance labels, you can project them to 2D bounding boxes:
 
 ```bash
 python scripts/preprocessing.py configs/preprocessing/project_point_cloud_labels.toml
