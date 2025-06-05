@@ -125,7 +125,7 @@ def _process_annotation_paths(base_dir: Path, annotation_files: List[str]) -> Li
             # If it's a directory, collect all JSON files inside
             json_files = list(path.glob("*.json"))
             # Convert paths to strings relative to base_dir
-            rel_paths = [str(js_file.relative_to(base_dir)) for js_file in json_files]
+            rel_paths = [str(json_file.relative_to(base_dir)) for json_file in json_files]
             processed_paths.extend(rel_paths)
             print(f"INFO: Found {len(json_files)} JSON files in directory {path}.")
         else:
