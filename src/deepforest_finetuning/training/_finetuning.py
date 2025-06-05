@@ -106,7 +106,7 @@ def split_images_into_patches(
     return annotations_path
 
 
-def _process_annotation_paths(base_dir: Path, annotation_files: List[str]) -> List[str]:
+def _collect_annotation_paths(base_dir: Path, annotation_files: List[str]) -> List[str]:
     """
     Process annotation file paths, handling both individual files and directories.
 
@@ -117,23 +117,20 @@ def _process_annotation_paths(base_dir: Path, annotation_files: List[str]) -> Li
     Returns:
         List of processed annotation file paths.
     """
-    processed_paths = []
+    annotation_paths = []
 
     for file_path in annotation_files:
         path = base_dir / file_path
         if path.is_dir():
-            # If it's a directory, collect all JSON files inside
             json_files = list(path.glob("*.json"))
-            # Convert paths to strings relative to base_dir
-            rel_paths = [str(json_file.relative_to(base_dir)) for json_file in json_files]
-            processed_paths.extend(rel_paths)
+            relative_paths = [str(js_file.relative_to(base_dir)) for js_file in json_files]
+            annotation_paths.extend(relative_paths)
             print(f"INFO: Found {len(json_files)} JSON files in directory {path}.")
         else:
-            # If it's a file, add it directly
-            processed_paths.append(file_path)
+            annotation_paths.append(file_path)
             print(f"INFO: Using annotation file {file_path}.")
 
-    return processed_paths
+    return annotation_paths
 
 
 class EvaluationCallBack(Callback):
@@ -165,12 +162,9 @@ class EvaluationCallBack(Callback):
         eval_trainer = copy.deepcopy(trainer)
         eval_model.trainer = eval_trainer
 
-        # Keep a reference to the original trainer for logging metrics
-        original_trainer = trainer
-
         # evaluate on training and test set
-        processed_train_files = _process_annotation_paths(self._base_dir, self._config.train_annotation_files)
-        processed_test_files = _process_annotation_paths(self._base_dir, self._config.test_annotation_files)
+        processed_train_files = _collect_annotation_paths(self._base_dir, self._config.train_annotation_files)
+        processed_test_files = _collect_annotation_paths(self._base_dir, self._config.test_annotation_files)
 
         for prefix, annotation_files in [
             ("train", processed_train_files),
@@ -227,23 +221,16 @@ class EvaluationCallBack(Callback):
             # This makes them available for callbacks like EarlyStopping
             for metric_name, metric_value in metrics.items():
                 # Log with trainer if logger is available
-                if original_trainer.logger is not None:
-                    original_trainer.logger.log_metrics(
+                if trainer.logger is not None:
+                    trainer.logger.log_metrics(
                         {f"{prefix}_{metric_name}": metric_value},
-                        step=original_trainer.current_epoch,
+                        step=trainer.current_epoch,
                     )
 
-                # For test metrics, also log them as validation metrics for EarlyStopping
-                if prefix == "test":
-                    if metric_name == "f1":
-                        # Log F1 as val_f1 for early stopping (maximize)
-                        # Access callback_metrics directly on the original trainer
-                        original_trainer.callback_metrics[f"val_{metric_name}"] = torch.tensor(metric_value)
-
-                    # Always log inverse F1 as val_loss for compatibility with default early stopping
-                    if metric_name == "f1":
-                        # For loss, use 1-F1 as val_loss (minimize is better)
-                        original_trainer.callback_metrics["val_loss"] = torch.tensor(1.0 - metric_value)
+                if metric_name == "f1":
+                    # Log F1 as val_f1 for early stopping (maximize)
+                    # Access callback_metrics directly on the original trainer
+                    trainer.callback_metrics[f"val_{metric_name}"] = torch.tensor(metric_value)
 
 
 def finetuning(
@@ -262,16 +249,12 @@ def finetuning(
     preprocessed_annotation_files = {}
 
     # Process annotation file paths for train and pretraining (if available)
-    processed_train_files = _process_annotation_paths(base_dir, config.train_annotation_files)
+    train_annotation_files = _collect_annotation_paths(base_dir, config.train_annotation_files)
 
-    print(processed_train_files)
-
-    splitting_configs = [("train", processed_train_files)]
+    splitting_configs = [("train", train_annotation_files)]
     if config.pretrain_annotation_files is not None and len(config.pretrain_annotation_files) > 0:
-        processed_pretrain_files = _process_annotation_paths(base_dir, config.pretrain_annotation_files)
-        splitting_configs.append(("pretraining", processed_pretrain_files))
-
-    print(f"INFO: Found {len(splitting_configs)} annotation configurations to process.")
+        pretrain_annotation_files = _collect_annotation_paths(base_dir, config.pretrain_annotation_files)
+        splitting_configs.append(("pretraining", pretrain_annotation_files))
 
     for prefix, annotation_files in splitting_configs:
         annotations = []

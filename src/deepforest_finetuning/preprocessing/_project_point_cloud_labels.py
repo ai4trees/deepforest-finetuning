@@ -18,7 +18,7 @@ import rasterio
 from rasterio.transform import from_origin
 from skimage.filters.rank import modal
 import torch
-from torch_scatter import scatter_max  # pylint: disable=import-error
+from torch_scatter import scatter_max
 
 from deepforest_finetuning.utils import coco_bbox_to_polygon
 from deepforest_finetuning.config import PointCloudLabelProjectionConfig

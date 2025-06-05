@@ -43,22 +43,19 @@ class PredictionDataset(Dataset):
         Returns: Image data.
         """
         img_path = self.image_files[idx]
-        # Check file extension to use appropriate method for reading the image
-        file_ext = os.path.splitext(img_path)[1].lower()
+        file_ext = Path(img_path).suffix.lower()
 
         if file_ext in [".tif", ".tiff"]:
             # Use tifffile for TIFF images
             image_array = np.array(imread(img_path))
-            # Ensure we only take the first 3 channels if there are more
-            if image_array.ndim >= 3 and image_array.shape[2] > 3:
-                image_array = image_array[:, :, :3]
         else:
             # Use PIL for other image formats (PNG, JPG, etc.)
             image = Image.open(img_path)
             image_array = np.array(image)
-            # Ensure we only take the first 3 channels if there are more
-            if image_array.ndim >= 3 and image_array.shape[2] > 3:
-                image_array = image_array[:, :, :3]
+
+        # Ensure we only take the first 3 channels if there are more
+        if image_array.ndim >= 3 and image_array.shape[2] > 3:
+            image_array = image_array[:, :, :3]
 
         # Ensure consistent dtype
         image_array = image_array.astype(np.uint8)

@@ -57,7 +57,7 @@ A Dockerfile is provided for containerized usage:
 
 ```bash
 docker build -t deepforest-finetuning .
-docker run --gpus all -it -v /path/to/your/data:/data deepforest-finetuning /bin/bash
+docker run --gpus all -it -v /path/to/your/data:/workspace/data/deepforest-finetuning
 ```
 
 ## Project Structure
@@ -65,9 +65,6 @@ docker run --gpus all -it -v /path/to/your/data:/data deepforest-finetuning /bin
 ```
 deepforest-finetuning/
 ├── configs/              # Configuration files for different workflows
-│   ├── baseline/         # Configurations for the baseline model
-│   ├── finetuning/       # Configurations for fine-tuning
-│   └── preprocessing/    # Configurations for data preprocessing
 ├── scripts/              # Executable scripts for main workflows
 │   ├── evaluate.py       # Script for model evaluation
 │   ├── finetuning.py     # Script for fine-tuning
@@ -105,15 +102,7 @@ image_paths = ["image1.tif", "image2.tif"]
 label_json_output_paths = ["labels1.json", "labels2.json"]
 ```
 
-#### b. Preprocessing Manually Corrected Labels
-
-Convert manually created or corrected labels to the format required by DeepForest:
-
-```bash
-python scripts/preprocessing.py configs/preprocessing/preprocess_manually_corrected_labels.toml
-```
-
-#### c. Filtering Labels
+#### b. Filtering Labels
 
 Filter out unwanted labels based on overlap and size:
 
@@ -121,7 +110,7 @@ Filter out unwanted labels based on overlap and size:
 python scripts/preprocessing.py configs/preprocessing/filter_labels.toml
 ```
 
-#### d. Image Rescaling
+#### c. Image Rescaling
 
 Rescale images to different resolutions:
 
@@ -226,24 +215,7 @@ All workflows are configured using TOML files:
    python scripts/evaluate.py configs/evaluation/my_evaluation_config.toml
    ```
 
-### Using Different Image Resolutions
-
-The package supports working with images at various resolutions. The config directories contain subdirectories for different resolutions (e.g., `2_5_cm`, `5_cm`, `7_5_cm`, `10_cm`).
-
-## Advanced Features
-
-### Experiment Tracking with Weights & Biases
-
-The fine-tuning process supports integration with Weights & Biases for experiment tracking:
-
-```toml
-# Add to your fine-tuning config
-use_wandb = true
-wandb_project = "deepforest-finetuning"
-wandb_entity = "your-wandb-username"
-```
-
-This will log metrics, hyperparameters, and validation results to your W&B account.
+## Other Features
 
 ### Multiple Random Seeds
 

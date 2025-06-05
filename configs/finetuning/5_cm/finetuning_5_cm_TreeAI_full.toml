@@ -1,7 +1,7 @@
 base_dir = "/mnt/daten/TreeAI/finetuning/for_finetuning/5cm"
 tmp_dir = "./tmp"
 patch_size = 640
-patch_overlap = 0.2
+patch_overlap = 0.1
 image_folder = "images"
 train_annotation_files = [
     "annotations",
