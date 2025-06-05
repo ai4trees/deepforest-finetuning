@@ -24,7 +24,7 @@ DeepForest is a deep learning model designed for detecting trees in aerial RGB i
 
 - Data preprocessing for various input formats
 - Automatic label projection from 3D point clouds to 2D orthophotos
-- Image rescaling and patch generation
+- Image rescaling and tiling
 - Model fine-tuning with multiple random seeds for robust evaluation
 - Prediction on new images with customizable tiling
 - Evaluation metrics calculation (precision, recall, F1 score)
