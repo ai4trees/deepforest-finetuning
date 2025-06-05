@@ -160,7 +160,7 @@ class EvaluationCallBack(Callback):
             pl_module: Model to be evaluated.
         """
 
-        # Create a copy of the model for evaluation to avoid affecting the training
+        # Create a copy of the model for evaluation to avoid affecting the random state of the training
         eval_model = copy.deepcopy(pl_module)
         eval_trainer = copy.deepcopy(trainer)
         eval_model.trainer = eval_trainer
