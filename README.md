@@ -20,7 +20,7 @@ A Python package for fine-tuning the [DeepForest](https://github.com/weecology/D
 
 ## Overview
 
-DeepForest is a deep learning model designed for detecting trees in aerial RGB imagery. This package extends DeepForest by providing a comprehensive framework to fine-tune the model on your own datasets. Key features include:
+DeepForest is a deep learning model designed for detecting trees in aerial RGB imagery. This package extends DeepForest by providing a framework to fine-tune the model on your own datasets. Key features include:
 
 - Data preprocessing for various input formats
 - Automatic label projection from 3D point clouds to 2D orthophotos
