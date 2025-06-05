@@ -115,7 +115,7 @@ python scripts/preprocessing.py configs/preprocessing/preprocess_manually_correc
 
 #### c. Filtering Labels
 
-Filter out unwanted labels based on size, position, etc.:
+Filter out unwanted labels based on overlap and size:
 
 ```bash
 python scripts/preprocessing.py configs/preprocessing/filter_labels.toml
