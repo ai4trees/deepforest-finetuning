@@ -1,26 +1,6 @@
 ## Fine-Tuning DeepForest for Forest Tree Detection in High-Resolution UAV Imagery
 
-A Python package for fine-tuning the [DeepForest](https://github.com/weecology/DeepForest) model on custom data for tree detection in aerial imagery. This project provides a streamlined workflow for preprocessing training data, fine-tuning the DeepForest model, making predictions, and evaluating results.
-
-## Table of Contents
-- [Overview](#overview)
-- [Installation](#installation)
-  - [Using Conda](#using-conda)
-  - [Using Docker](#using-docker)
-- [Project Structure](#project-structure)
-- [Workflow](#workflow)
-  - [1. Data Preprocessing](#1-data-preprocessing)
-  - [2. Model Fine-tuning](#2-model-fine-tuning)
-  - [3. Making Predictions](#3-making-predictions)
-  - [4. Evaluating Results](#4-evaluating-results)
-- [Configuration Files](#configuration-files)
-- [Example Usage](#example-usage)
-- [Advanced Features](#advanced-features)
-- [License](#license)
-
-## Overview
-
-DeepForest is a deep learning model designed for detecting trees in aerial RGB imagery. This package extends DeepForest by providing a framework to fine-tune the model on your own datasets. Key features include:
+A Python package for fine-tuning the [DeepForest](https://github.com/weecology/DeepForest) model on custom data. DeepForest is a deep learning model for detecting trees in aerial RGB imagery. This package extends DeepForest by providing a workflow to fine-tune the model on your own datasets. Key features include:
 
 - Data preprocessing for various input formats
 - Automatic label projection from 3D point clouds to 2D orthophotos
@@ -28,7 +8,6 @@ DeepForest is a deep learning model designed for detecting trees in aerial RGB i
 - Model fine-tuning with multiple random seeds for robust evaluation
 - Prediction on new images with customizable tiling
 - Evaluation metrics calculation (precision, recall, F1 score)
-- Support for experiment tracking with [Weights & Biases](https://wandb.ai/)
 
 ## Installation
 
@@ -57,27 +36,7 @@ A Dockerfile is provided for containerized usage:
 
 ```bash
 docker build -t deepforest-finetuning .
-docker run --gpus all -it -v /path/to/your/data:/workspace/data/deepforest-finetuning
-```
-
-## Project Structure
-
-```
-deepforest-finetuning/
-├── configs/              # Configuration files for different workflows
-├── scripts/              # Executable scripts for main workflows
-│   ├── evaluate.py       # Script for model evaluation
-│   ├── finetuning.py     # Script for fine-tuning
-│   ├── prediction.py     # Script for making predictions
-│   └── preprocessing.py  # Script for data preprocessing
-└── src/                  # Source code
-    └── deepforest_finetuning/
-        ├── config/       # Configuration dataclasses
-        ├── evaluation/   # Model evaluation logic
-        ├── prediction/   # Prediction logic
-        ├── preprocessing/# Data preprocessing logic
-        ├── training/     # Model training and fine-tuning logic
-        └── utils/        # Utility functions
+docker run --gpus all --rm -it -v /path/to/your/data:/workspace/data/ deepforest-finetuning
 ```
 
 ## Workflow
@@ -88,7 +47,7 @@ The package supports multiple preprocessing steps:
 
 #### a. Projecting Labels from Point Clouds
 
-If you have 3D point cloud data with pointwise tree instance labels, you can project them to 2D bounding boxes:
+If you have 3D point cloud data with pointwise tree instance labels in addition to 2D aerial images, you can project them to 2D bounding boxes:
 
 ```bash
 python scripts/preprocessing.py configs/preprocessing/project_point_cloud_labels.toml
@@ -104,18 +63,35 @@ label_json_output_paths = ["labels1.json", "labels2.json"]
 
 #### b. Filtering Labels
 
-Filter out unwanted labels based on overlap and size:
+Filters labels using non-maximum suppression based on overlap and size:
 
 ```bash
 python scripts/preprocessing.py configs/preprocessing/filter_labels.toml
 ```
 
+Required configuration:
+```toml
+base_dir = "/path/to/your/data"
+input_label_folder = "labels"
+output_label_folder = "labels_filtered"
+iou_threshold = 0.5
+```
+
 #### c. Image Rescaling
 
-Rescale images to different resolutions:
+Rescale images and corresponding labels to different resolutions:
 
 ```bash
 python scripts/preprocessing.py configs/preprocessing/rescale_images.toml
+```
+
+Required configuration:
+```toml
+base_dir = "/path/to/your/data"
+input_images = ["image1.tif", "image2.tif"]
+input_label_folders = ["labels"]
+output_folders = ["rescaled_2_5_cm", "rescaled_5_cm"]
+target_resolutions = [0.025, 0.05]
 ```
 
 ### 2. Model Fine-tuning
@@ -145,8 +121,7 @@ target_metric = "val_f1"
 ```
 
 This will:
-1. Split images into patches
-2. Create training and test datasets
+1. Split images into patches and load training and test datasets
 3. Fine-tune the model for the specified number of epochs
 4. Run with multiple random seeds for robust evaluation
 5. Save checkpoints and logs
@@ -190,30 +165,7 @@ output_file = "/path/to/evaluation_results.csv"
 
 ## Configuration Files
 
-All workflows are configured using TOML files:
-
-- **Preprocessing configs**: Define data paths and parameters for preprocessing steps
-- **Training configs**: Specify training hyperparameters, data paths, and evaluation settings
-- **Prediction configs**: Set model checkpoint, input images, and output format
-- **Evaluation configs**: Define prediction and ground truth file paths, and evaluation metrics
-
-## Example Usage
-
-### Complete Fine-tuning Pipeline Example
-
-1. Preprocess your data (e.g., project point cloud labels, rescale images)
-2. Fine-tune the model:
-   ```bash
-   python scripts/finetuning.py configs/finetuning/my_finetuning_config.toml
-   ```
-3. Make predictions with the fine-tuned model:
-   ```bash
-   python scripts/prediction.py configs/prediction/my_prediction_config.toml
-   ```
-4. Evaluate the results:
-   ```bash
-   python scripts/evaluate.py configs/evaluation/my_evaluation_config.toml
-   ```
+All workflows are configured using TOML files. Example configurations are provided in the `configs` folder.
 
 ## Other Features
 
@@ -238,10 +190,6 @@ target_metric = "val_f1"  # Metric to monitor for early stopping and checkpointi
 ```
 
 The `mode` (min/max) is automatically inferred from the metric name. Metrics containing "loss" use "min" mode (lower is better), all others use "max" mode (higher is better).
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ### How to Cite
 
