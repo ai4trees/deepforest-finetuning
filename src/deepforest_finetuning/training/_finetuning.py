@@ -42,14 +42,12 @@ def get_transform(augment: bool, seed: Optional[int] = None):
         transform = A.Compose(
             [A.HorizontalFlip(p=0.5), ToTensorV2()],
             bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
-            seed=seed
+            seed=seed,
         )
 
     else:
         transform = A.Compose(
-            [ToTensorV2()],
-            bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
-            seed=seed
+            [ToTensorV2()], bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"]), seed=seed
         )
 
     return transform
