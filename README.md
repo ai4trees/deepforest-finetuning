@@ -1,4 +1,4 @@
-# DeepForest Finetuning
+## Fine-Tuning DeepForest for Forest Tree Detection in High-Resolution UAV Imagery
 
 A Python package for fine-tuning the [DeepForest](https://github.com/weecology/DeepForest) model on custom data for tree detection in aerial imagery. This project provides a streamlined workflow for preprocessing training data, fine-tuning the DeepForest model, making predictions, and evaluating results.
 
@@ -242,3 +242,19 @@ The `mode` (min/max) is automatically inferred from the metric name. Metrics con
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+### How to Cite
+
+If you use our code, please consider citing our paper:
+
+```
+@article{Burmeister_FineTuning_DeepForest_2025,
+author = {Burmeister, Josafat-Mattias and Zabbarov, Julian and Reder, Stefan and Richter, Rico and Mund, Jan-Peter and Döllner, Jürgen},
+doi = {n/a},
+journal = {ISPRS Archives of the Photogrammetry, Remote Sensing and Spatial Information Sciences},
+pages = {n/a},
+title = {{Fine-Tuning DeepForest for Forest Tree Detection in High-Resolution UAV Imagery}},
+volume = {n/a},
+year = {2025}
+}
+```
