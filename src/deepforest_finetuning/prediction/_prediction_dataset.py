@@ -56,7 +56,6 @@ class PredictionDataset(Dataset):
         if image_array.ndim >= 3 and image_array.shape[2] > 3:
             image_array = image_array[:, :, :3]
 
-        # Ensure consistent dtype
         image_array = image_array.astype(np.uint8)
 
         if self.resize_images_to is not None:

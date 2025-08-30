@@ -7,7 +7,7 @@ from functools import partial
 import os
 from pathlib import Path
 import shutil
-from typing import List, Union
+from typing import List, Optional, Union
 import uuid
 
 import albumentations as A
@@ -27,7 +27,7 @@ from deepforest_finetuning.evaluation import evaluate
 from deepforest_finetuning.prediction import prediction as run_prediction
 
 
-def get_transform(augment: bool):
+def get_transform(augment: bool, seed: Optional[int] = None):
     """
     Albumentations transformation of bounding boxes.
 
@@ -42,12 +42,14 @@ def get_transform(augment: bool):
         transform = A.Compose(
             [A.HorizontalFlip(p=0.5), ToTensorV2()],
             bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
+            seed=seed
         )
 
     else:
         transform = A.Compose(
             [ToTensorV2()],
             bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
+            seed=seed
         )
 
     return transform
@@ -123,7 +125,7 @@ def _collect_annotation_paths(base_dir: Path, annotation_files: List[str]) -> Li
         path = base_dir / file_path
         if path.is_dir():
             json_files = list(path.glob("*.json"))
-            relative_paths = [str(js_file.relative_to(base_dir)) for js_file in json_files]
+            relative_paths = [str(json_file.relative_to(base_dir)) for json_file in json_files]
             annotation_paths.extend(relative_paths)
             print(f"INFO: Found {len(json_files)} JSON files in directory {path}.")
         else:
@@ -159,16 +161,15 @@ class EvaluationCallBack(Callback):
 
         # Create a copy of the model for evaluation to avoid affecting the random state of the training
         eval_model = copy.deepcopy(pl_module)
-        eval_trainer = copy.deepcopy(trainer)
-        eval_model.trainer = eval_trainer
+        eval_model.trainer = copy.deepcopy(trainer)
 
         # evaluate on training and test set
-        processed_train_files = _collect_annotation_paths(self._base_dir, self._config.train_annotation_files)
-        processed_test_files = _collect_annotation_paths(self._base_dir, self._config.test_annotation_files)
+        train_annotation_files = _collect_annotation_paths(self._base_dir, self._config.train_annotation_files)
+        test_annotation_files = _collect_annotation_paths(self._base_dir, self._config.test_annotation_files)
 
         for prefix, annotation_files in [
-            ("train", processed_train_files),
-            ("test", processed_test_files),
+            ("train", train_annotation_files),
+            ("test", test_annotation_files),
         ]:
             image_files = []
             annotations = []
@@ -220,7 +221,6 @@ class EvaluationCallBack(Callback):
             # Log metrics to Lightning logger for each prefix (train/test)
             # This makes them available for callbacks like EarlyStopping
             for metric_name, metric_value in metrics.items():
-                # Log with trainer if logger is available
                 if trainer.logger is not None:
                     trainer.logger.log_metrics(
                         {f"{prefix}_{metric_name}": metric_value},
@@ -228,9 +228,8 @@ class EvaluationCallBack(Callback):
                     )
 
                 if metric_name == "f1":
-                    # Log F1 as val_f1 for early stopping (maximize)
                     # Access callback_metrics directly on the original trainer
-                    trainer.callback_metrics[f"val_{metric_name}"] = torch.tensor(metric_value)
+                    trainer.callback_metrics[f"{prefix}_{metric_name}"] = torch.tensor(metric_value)
 
 
 def finetuning(
@@ -248,7 +247,6 @@ def finetuning(
     preprocessed_image_folders = {}
     preprocessed_annotation_files = {}
 
-    # Process annotation file paths for train and pretraining (if available)
     train_annotation_files = _collect_annotation_paths(base_dir, config.train_annotation_files)
 
     splitting_configs = [("train", train_annotation_files)]
@@ -288,7 +286,7 @@ def finetuning(
             print(f"INFO: Training for {config.epochs} epochs with seed {seed}...")
 
             # load model
-            model = deepforest_main.deepforest(transforms=partial(get_transform))
+            model = deepforest_main.deepforest(transforms=partial(get_transform, seed=seed))
             model.use_release()
 
             # copy config to avoid overwriting
@@ -311,18 +309,14 @@ def finetuning(
                     name=f"{config.epochs}_epochs_seed_{seed}_pretraining",
                 )
 
-                # Add pretraining callbacks
                 pretraining_callbacks = []
                 if config.early_stopping_patience is not None:
                     pretraining_callbacks.append(
                         EarlyStopping(
-                            monitor=config.target_metric.replace(
-                                "val_", ""
-                            ),  # Adjust for pretraining where we don't use "val_" prefix
-                            min_delta=0.0,  # Minimum change to qualify as an improvement
+                            monitor=config.target_metric,
+                            min_delta=0.0,
                             patience=config.early_stopping_patience,
                             verbose=True,
-                            # Automatically infer mode from the metric name
                             mode="min" if "loss" in config.target_metric else "max",
                         )
                     )
@@ -352,19 +346,17 @@ def finetuning(
                         save_top_k=config.save_top_k,
                         every_n_epochs=1,
                         enable_version_counter=False,
-                        # Automatically infer mode from the metric name
                         mode="min" if "loss" in config.target_metric else "max",
                     )
                 )
 
-            # Add early stopping callback if patience is set
             if config.early_stopping_patience is not None:
                 callbacks.append(
                     EarlyStopping(
-                        monitor=config.target_metric,  # Use configured metric for early stopping
+                        monitor=config.target_metric,
+                        min_delta=0.0,
                         patience=config.early_stopping_patience,
                         verbose=True,
-                        # Automatically infer mode from the metric name
                         mode="min" if "loss" in config.target_metric else "max",
                     )
                 )

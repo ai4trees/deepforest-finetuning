@@ -117,7 +117,7 @@ learning_rate = 0.0001
 checkpoint_dir = "checkpoints"
 early_stopping_patience = 2
 save_top_k = 1
-target_metric = "val_f1"
+target_metric = "test_f1"
 ```
 
 This will:
@@ -186,7 +186,7 @@ To prevent overfitting, you can enable early stopping and control model checkpoi
 ```toml
 early_stopping_patience = 2  # Stop training if performance doesn't improve for this many epochs
 save_top_k = 1  # Save the top k best models based on the target metric
-target_metric = "val_f1"  # Metric to monitor for early stopping and checkpointing
+target_metric = "test_f1"  # Metric to monitor for early stopping and checkpointing
 ```
 
 The `mode` (min/max) is automatically inferred from the metric name. Metrics containing "loss" use "min" mode (lower is better), all others use "max" mode (higher is better).
