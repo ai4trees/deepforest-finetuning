@@ -88,8 +88,11 @@ python scripts/preprocessing.py configs/preprocessing/rescale_images.toml
 Required configuration:
 ```toml
 base_dir = "/path/to/your/data"
+# input_images can either be a list of individual file paths or string specifying a folder path
 input_images = ["image1.tif", "image2.tif"]
+# if no labels are available, input_label_folders can be left empty
 input_label_folders = ["labels"]
+# there must be one output folder for each target resolution
 output_folders = ["rescaled_2_5_cm", "rescaled_5_cm"]
 target_resolutions = [0.025, 0.05]
 ```
