@@ -27,28 +27,19 @@ from deepforest_finetuning.evaluation import evaluate
 from deepforest_finetuning.prediction import prediction as run_prediction
 
 
-def get_transform(augment: bool, seed: Optional[int] = None):
+def get_transform(seed: Optional[int] = None):
     """
     Albumentations transformation of bounding boxes.
-
-    Args:
-        augment: Whether to apply data augmentations.
 
     Returns:
         Transforms.
     """
 
-    if augment:
-        transform = A.Compose(
-            [A.HorizontalFlip(p=0.5), ToTensorV2()],
-            bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
-            seed=seed,
-        )
-
-    else:
-        transform = A.Compose(
-            [ToTensorV2()], bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"]), seed=seed
-        )
+    transform = A.Compose(
+        [A.HorizontalFlip(p=0.5), ToTensorV2()],
+        bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
+        seed=seed,
+    )
 
     return transform
 
@@ -106,7 +97,7 @@ def split_images_into_patches(
     return annotations_path
 
 
-def _collect_annotation_paths(base_dir: Path, annotation_files: List[str]) -> List[str]:
+def _collect_annotation_paths(base_dir: Path, annotation_files: Union[List[str], str]) -> List[str]:
     """
     Process annotation file paths, handling both individual files and directories.
 
@@ -118,6 +109,9 @@ def _collect_annotation_paths(base_dir: Path, annotation_files: List[str]) -> Li
         List of processed annotation file paths.
     """
     annotation_paths = []
+
+    if isinstance(annotation_files, str):
+        annotation_files = [annotation_files]
 
     for file_path in annotation_files:
         path = base_dir / file_path
@@ -284,7 +278,7 @@ def finetuning(
             print(f"INFO: Training for {config.epochs} epochs with seed {seed}...")
 
             # load model
-            model = deepforest_main.deepforest(transforms=partial(get_transform, seed=seed))
+            model = deepforest_main.deepforest(transforms=get_transform(seed=seed))
             model.use_release()
 
             # copy config to avoid overwriting
@@ -292,12 +286,11 @@ def finetuning(
 
             # configure model
             if current_config.pretrain_learning_rate is None:
-                model.config["train"]["lr"] = current_config.learning_rate
+                model.config.train.lr = current_config.learning_rate
             else:
-                model.config["train"]["lr"] = current_config.pretrain_learning_rate
+                model.config.train.lr = current_config.pretrain_learning_rate
 
-            model.config["train"]["epochs"] = config.epochs
-            model.config["save-snapshot"] = False
+            model.config.train.epochs = config.epochs
 
             if "pretraining" in preprocessed_annotation_files:
                 model.config["train"]["csv_file"] = preprocessed_annotation_files["pretraining"]

@@ -78,6 +78,7 @@ def rescale_images(config: ImageRescalingConfig):  # pylint: disable=too-many-lo
                 label_output_folder.mkdir(exist_ok=True, parents=True)
 
                 label_subfolders = [x for x in os.listdir(input_label_folder) if os.path.isdir(input_label_folder / x)]
+                label_subfolders.append(".")
                 for label_subfolder in label_subfolders:
                     label_file_name = f"{original_image_path.stem}_coco.json"
                     label_file = input_label_folder / label_subfolder / label_file_name

@@ -84,8 +84,8 @@ class TrainingConfig:  # pylint: disable=too-many-instance-attributes
     patch_overlap: float
     learning_rate: float
     tmp_dir: str
-    train_annotation_files: List[str]
-    test_annotation_files: List[str]
+    train_annotation_files: Union[List[str], str]
+    test_annotation_files: Union[List[str], str]
     prediction_export: ExportConfig
     checkpoint_dir: Optional[str] = None
     iou_threshold: float = 0.5
