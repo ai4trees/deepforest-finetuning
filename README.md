@@ -13,19 +13,49 @@ A Python package for fine-tuning the [DeepForest](https://github.com/weecology/D
 
 ### Using Conda
 
-1. Clone this repository:
+1. Make sure you have conda installed. If conda is installed, `conda --version` should output the conda version.
+
+2. Clone this repository:
    ```bash
    git clone https://github.com/yourusername/deepforest-finetuning.git
    cd deepforest-finetuning
    ```
 
-2. Create and activate a conda environment from the provided environment.yml file:
+3. Create and activate a conda environment from the provided environment.yml file:
    ```bash
    conda env create -f environment.yml
    conda activate deepforest-env
    ```
 
-3. Install the package in development mode:
+4. Install the package in development mode:
+   ```bash
+   pip install -e .
+   ```
+
+### Using pip
+
+1. Make sure that Python3 and pip are installed.
+
+2. Clone this repository:
+   ```bash
+   git clone https://github.com/yourusername/deepforest-finetuning.git
+   cd deepforest-finetuning
+   ```
+
+3. Install the [pointtorch](https://ai4trees.github.io/pointtorch/v0.2.0/) package and its dependencies (`${TORCH}` should be replaced by the PyTorch version and `${CUDA}` by `cpu`, `cu126`, etc., depending on the PyTorch installation):
+   ```bash
+   pip install torch torchvision --index-url https://download.pytorch.org/whl/${CUDA}
+   pip install torch-scatter torch-cluster -f https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html
+   pip install pointtorch
+   ``` 
+
+4. Install the [DeepForest](https://deepforest.readthedocs.io/en/v1.5.0/getting_started/install.html) package:
+
+   ```bash
+   pip install "git+https://github.com/weecology/DeepForest.git"
+   ```
+
+5. Install the package in development mode:
    ```bash
    pip install -e .
    ```
