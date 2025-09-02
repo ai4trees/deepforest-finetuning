@@ -160,6 +160,7 @@ data
 *.csv
 *.pl
 
+**.laz
 **.tif
 **.log
 **.wandb
