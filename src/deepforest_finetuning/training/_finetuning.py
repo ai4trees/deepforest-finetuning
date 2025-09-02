@@ -3,7 +3,6 @@
 __all__ = ["split_images_into_patches", "finetuning"]
 
 import copy
-from functools import partial
 import os
 from pathlib import Path
 import shutil
