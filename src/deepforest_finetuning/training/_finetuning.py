@@ -3,7 +3,6 @@
 __all__ = ["split_images_into_patches", "finetuning"]
 
 import copy
-from functools import partial
 import os
 from pathlib import Path
 import shutil
@@ -15,7 +14,7 @@ from albumentations.pytorch import ToTensorV2
 from deepforest import utilities, preprocess
 from deepforest import main as deepforest_main
 from pytorch_lightning import seed_everything, Trainer, LightningModule
-from pytorch_lightning.callbacks import Callback, ModelCheckpoint
+from pytorch_lightning.callbacks import Callback, ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import CSVLogger
 from pytorch_lightning.utilities.seed import isolate_rng
 import numpy as np
@@ -27,29 +26,19 @@ from deepforest_finetuning.evaluation import evaluate
 from deepforest_finetuning.prediction import prediction as run_prediction
 
 
-def get_transform(augment: bool, seed: Optional[int] = None):
+def get_transform(seed: Optional[int] = None):
     """
     Albumentations transformation of bounding boxes.
-
-    Args:
-        augment: Whether to apply data augmentations.
-        seed: Random seed for data augmentations to ensure reproducibility. Defaults to :code:`None`.
 
     Returns:
         Transforms.
     """
 
-    if augment:
-        transform = A.Compose(
-            [A.HorizontalFlip(p=0.5), ToTensorV2()],
-            bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
-            seed=seed,
-        )
-
-    else:
-        transform = A.Compose(
-            [ToTensorV2()], bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"]), seed=seed
-        )
+    transform = A.Compose(
+        [A.HorizontalFlip(p=0.5), ToTensorV2()],
+        bbox_params=A.BboxParams(format="pascal_voc", label_fields=["category_ids"]),
+        seed=seed,
+    )
 
     return transform
 
@@ -107,6 +96,36 @@ def split_images_into_patches(
     return annotations_path
 
 
+def _collect_annotation_paths(base_dir: Path, annotation_files: Union[List[str], str]) -> List[str]:
+    """
+    Process annotation file paths, handling both individual files and directories.
+
+    Args:
+        base_dir: Base directory for relative paths.
+        annotation_files: List of annotation file paths or directories containing annotation files.
+
+    Returns:
+        List of processed annotation file paths.
+    """
+    annotation_paths = []
+
+    if isinstance(annotation_files, str):
+        annotation_files = [annotation_files]
+
+    for file_path in annotation_files:
+        path = base_dir / file_path
+        if path.is_dir():
+            json_files = list(path.glob("*.json"))
+            relative_paths = [str(json_file.relative_to(base_dir)) for json_file in json_files]
+            annotation_paths.extend(relative_paths)
+            print(f"INFO: Found {len(json_files)} JSON files in directory {path}.")
+        else:
+            annotation_paths.append(file_path)
+            print(f"INFO: Using annotation file {file_path}.")
+
+    return annotation_paths
+
+
 class EvaluationCallBack(Callback):
     """
     Callback that evaluates the model after each training epoch.
@@ -122,7 +141,7 @@ class EvaluationCallBack(Callback):
         self._base_dir = Path(config.base_dir)
         self._seed = seed
 
-    def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule):
+    def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule):  # pylint: disable=too-many-locals
         """
         Hook that evaluates the model after each training epoch.
 
@@ -131,14 +150,17 @@ class EvaluationCallBack(Callback):
             pl_module: Model to be evaluated.
         """
 
-        trainer = copy.deepcopy(trainer)
-        pl_module = copy.deepcopy(pl_module)
-        pl_module.trainer = trainer
-        # trainer_state = copy.deepcopy(trainer.state)
+        # Create a copy of the model for evaluation to avoid affecting the random state of the training
+        eval_model = copy.deepcopy(pl_module)
+        eval_model.trainer = copy.deepcopy(trainer)
+
         # evaluate on training and test set
+        train_annotation_files = _collect_annotation_paths(self._base_dir, self._config.train_annotation_files)
+        test_annotation_files = _collect_annotation_paths(self._base_dir, self._config.test_annotation_files)
+
         for prefix, annotation_files in [
-            ("train", self._config.train_annotation_files),
-            ("test", self._config.test_annotation_files),
+            ("train", train_annotation_files),
+            ("test", test_annotation_files),
         ]:
             image_files = []
             annotations = []
@@ -161,7 +183,7 @@ class EvaluationCallBack(Callback):
             export_config.output_file_name = f"{prefix}_predictions_seed_{self._seed}.csv"
 
             run_prediction(
-                pl_module,
+                eval_model,
                 image_files=image_files,
                 predict_tile=True,
                 patch_size=self._config.patch_size,
@@ -180,15 +202,30 @@ class EvaluationCallBack(Callback):
                 / f"{trainer.current_epoch + 1}_epochs"
                 / f"{prefix}_metrics_seed_{self._seed}.csv"
             )
-            evaluate(
+            metrics = evaluate(
                 prediction,
                 pd.concat(annotations),
                 self._config.iou_threshold,
                 metrics_file,
             )
 
+            # Log metrics to Lightning logger for each prefix (train/test)
+            # This makes them available for callbacks like EarlyStopping
+            for metric_name, metric_value in metrics.items():
+                if trainer.logger is not None:
+                    trainer.logger.log_metrics(
+                        {f"{prefix}_{metric_name}": metric_value},
+                        step=trainer.current_epoch,
+                    )
 
-def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-many-statements
+                if metric_name == "f1":
+                    # Access callback_metrics directly on the original trainer
+                    trainer.callback_metrics[f"{prefix}_{metric_name}"] = torch.tensor(metric_value)
+
+
+def finetuning(
+    config: TrainingConfig,
+):  # pylint: disable=too-many-locals, too-many-statements
     """Fine-tunes the DeepForest model."""
 
     torch.set_float32_matmul_precision(config.float32_matmul_precision)
@@ -201,9 +238,12 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
     preprocessed_image_folders = {}
     preprocessed_annotation_files = {}
 
-    splitting_configs = [("train", config.train_annotation_files)]
+    train_annotation_files = _collect_annotation_paths(base_dir, config.train_annotation_files)
+
+    splitting_configs = [("train", train_annotation_files)]
     if config.pretrain_annotation_files is not None and len(config.pretrain_annotation_files) > 0:
-        splitting_configs.append(("pretraining", config.pretrain_annotation_files))
+        pretrain_annotation_files = _collect_annotation_paths(base_dir, config.pretrain_annotation_files)
+        splitting_configs.append(("pretraining", pretrain_annotation_files))
 
     for prefix, annotation_files in splitting_configs:
         annotations = []
@@ -226,6 +266,9 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
 
     print("\nStarting training ...")
 
+    if config.early_stopping_patience is not None:
+        print(f"Early stopping enabled with patience of {config.early_stopping_patience} epochs")
+
     for seed in config.seeds:
         # set seeds for reproducibility
         seed_everything(seed, workers=True, verbose=True)
@@ -234,7 +277,7 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
             print(f"INFO: Training for {config.epochs} epochs with seed {seed}...")
 
             # load model
-            model = deepforest_main.deepforest(transforms=partial(get_transform, seed=seed))
+            model = deepforest_main.deepforest(transforms=get_transform(seed=seed))
             model.use_release()
 
             # copy config to avoid overwriting
@@ -242,23 +285,39 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
 
             # configure model
             if current_config.pretrain_learning_rate is None:
-                model.config["train"]["lr"] = current_config.learning_rate
+                model.config.train.lr = current_config.learning_rate
             else:
-                model.config["train"]["lr"] = current_config.pretrain_learning_rate
+                model.config.train.lr = current_config.pretrain_learning_rate
 
-            model.config["train"]["epochs"] = config.epochs
-            model.config["save-snapshot"] = False
+            model.config.train.epochs = config.epochs
 
-            if "pretrain" in annotation_files:
-                model.config["train"]["csv_file"] = preprocessed_annotation_files["pretrain"]
-                model.config["train"]["root_dir"] = preprocessed_image_folders["pretrain"]
-                logger = CSVLogger(config.log_dir, name=f"{config.epochs}_epochs_seed_{seed}_pretraining")
+            if "pretraining" in preprocessed_annotation_files:
+                model.config["train"]["csv_file"] = preprocessed_annotation_files["pretraining"]
+                model.config["train"]["root_dir"] = preprocessed_image_folders["pretraining"]
+                logger = CSVLogger(
+                    config.log_dir,
+                    name=f"{config.epochs}_epochs_seed_{seed}_pretraining",
+                )
+
+                pretraining_callbacks = []
+                if config.early_stopping_patience is not None:
+                    pretraining_callbacks.append(
+                        EarlyStopping(
+                            monitor=config.target_metric,
+                            min_delta=0.0,
+                            patience=config.early_stopping_patience,
+                            verbose=True,
+                            mode="min" if "loss" in config.target_metric else "max",
+                        )
+                    )
+
                 model.create_trainer(
                     precision=config.precision if torch.cuda.is_available() else 32,
                     log_every_n_steps=1,
                     benchmark=False,
                     deterministic=True,
                     logger=logger,
+                    callbacks=pretraining_callbacks if pretraining_callbacks else None,
                 )
                 model.trainer.fit(model)
 
@@ -269,14 +328,26 @@ def finetuning(config: TrainingConfig):  # pylint: disable=too-many-locals, too-
 
             callbacks: List[Callback] = [EvaluationCallBack(config, seed)]
             if config.checkpoint_dir is not None:
-
                 callbacks.append(
                     ModelCheckpoint(
                         dirpath=base_dir / config.checkpoint_dir,
                         filename="{epoch}_" + f"seed={seed}",
-                        save_top_k=-1,
+                        monitor=config.target_metric,
+                        save_top_k=config.save_top_k,
                         every_n_epochs=1,
                         enable_version_counter=False,
+                        mode="min" if "loss" in config.target_metric else "max",
+                    )
+                )
+
+            if config.early_stopping_patience is not None:
+                callbacks.append(
+                    EarlyStopping(
+                        monitor=config.target_metric,
+                        min_delta=0.0,
+                        patience=config.early_stopping_patience,
+                        verbose=True,
+                        mode="min" if "loss" in config.target_metric else "max",
                     )
                 )
 

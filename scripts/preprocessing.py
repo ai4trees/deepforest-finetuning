@@ -43,7 +43,11 @@ if __name__ == "__main__":
             preprocess_manually_corrected_labels,
             ManuallyCorrectedLabelPreprocessingConfig,
         ),
-        ("project_point_cloud_labels", project_point_cloud_labels, PointCloudLabelProjectionConfig),
+        (
+            "project_point_cloud_labels",
+            project_point_cloud_labels,
+            PointCloudLabelProjectionConfig,
+        ),
         ("rescale_images", rescale_images, ImageRescalingConfig),
     ]
     fire_dict = {}

@@ -38,7 +38,12 @@ def filter_bounding_boxed_with_size_based_nms(coco_json: Dict[str, Any], iou_thr
     for annotation in coco_json["annotations"]:
         bounding_box = annotation["bbox"]
         bounding_boxes.append(
-            [bounding_box[0], bounding_box[1], bounding_box[0] + bounding_box[2], bounding_box[1] + bounding_box[3]]
+            [
+                bounding_box[0],
+                bounding_box[1],
+                bounding_box[0] + bounding_box[2],
+                bounding_box[1] + bounding_box[3],
+            ]
         )
         bounding_box_sizes.append(bounding_box[2] * bounding_box[3])
 

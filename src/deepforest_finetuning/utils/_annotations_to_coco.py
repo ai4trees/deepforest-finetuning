@@ -11,7 +11,10 @@ from ._coco_bbox_to_polygon import coco_bbox_to_polygon
 
 
 def annotations_to_coco(
-    annotations: pd.DataFrame, image_width: int, image_height: int, capture_date: Optional[str] = None
+    annotations: pd.DataFrame,
+    image_width: int,
+    image_height: int,
+    capture_date: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Converts DeepForest annotations into COCO format.
@@ -72,8 +75,18 @@ def annotations_to_coco(
         next_id += 1
 
     coco_json = {
-        "info": {"year": "2024", "version": "1.0.0", "date_created": datetime.today().strftime("%Y-%m-%d")},
-        "licenses": [{"id": 0, "name": "Attribution License", "url": "https://creativecommons.org/licenses/by/4.0/"}],
+        "info": {
+            "year": "2024",
+            "version": "1.0.0",
+            "date_created": datetime.today().strftime("%Y-%m-%d"),
+        },
+        "licenses": [
+            {
+                "id": 0,
+                "name": "Attribution License",
+                "url": "https://creativecommons.org/licenses/by/4.0/",
+            }
+        ],
         "images": [
             {
                 "id": 0,

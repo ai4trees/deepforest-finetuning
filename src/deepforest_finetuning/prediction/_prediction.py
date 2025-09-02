@@ -55,14 +55,12 @@ def prediction(
         if predict_tile:
             pred = model.predict_tile(
                 image=tree_dataset[img_idx].astype(np.float32),
-                return_plot=False,
                 patch_size=patch_size,
                 patch_overlap=patch_overlap,
             )
         else:
             pred = model.predict_image(
                 image=tree_dataset[img_idx].astype(np.float32),
-                return_plot=False,
             )
         image_name = tree_dataset.__getname__(img_idx)
         pred["image_path"] = image_name

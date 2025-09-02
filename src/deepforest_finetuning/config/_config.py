@@ -84,8 +84,8 @@ class TrainingConfig:  # pylint: disable=too-many-instance-attributes
     patch_overlap: float
     learning_rate: float
     tmp_dir: str
-    train_annotation_files: List[str]
-    test_annotation_files: List[str]
+    train_annotation_files: Union[List[str], str]
+    test_annotation_files: Union[List[str], str]
     prediction_export: ExportConfig
     checkpoint_dir: Optional[str] = None
     iou_threshold: float = 0.5
@@ -96,6 +96,9 @@ class TrainingConfig:  # pylint: disable=too-many-instance-attributes
     precision: str = "16-mixed"
     float32_matmul_precision: str = "medium"
     log_dir: str = "./logs"
+    early_stopping_patience: Optional[int] = None
+    save_top_k: int = 1
+    target_metric: str = "test_f1"
 
 
 @dataclasses.dataclass

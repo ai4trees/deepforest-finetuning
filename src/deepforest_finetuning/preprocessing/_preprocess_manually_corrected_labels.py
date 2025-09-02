@@ -12,7 +12,11 @@ import numpy as np
 import rasterio
 
 from deepforest_finetuning.config import ManuallyCorrectedLabelPreprocessingConfig
-from deepforest_finetuning.utils import annotations_to_coco, get_image_size_from_pascal_voc, rescale_coco_json
+from deepforest_finetuning.utils import (
+    annotations_to_coco,
+    get_image_size_from_pascal_voc,
+    rescale_coco_json,
+)
 
 
 def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, too-many-nested-blocks, too-many-statements
@@ -55,7 +59,9 @@ def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, to
 
             coco_json = annotations_to_coco(annotations, image_width, image_height, capture_date=capture_date)
             coco_json = rescale_coco_json(
-                coco_json, target_image_path, source_image_shape=np.array([image_height, image_width])
+                coco_json,
+                target_image_path,
+                source_image_shape=np.array([image_height, image_width]),
             )
 
             output_file_path = (output_label_folder / f"{Path(image_path).stem}_coco").with_suffix(".json")
@@ -111,9 +117,15 @@ def preprocess_manually_corrected_labels(  # pylint: disable=too-many-locals, to
                 continue
 
             clipped_x_min = max(int((x_min_meter - target_top_left[0]) / target_pixel_size[0]), 0)
-            clipped_x_max = min(int((x_max_meter - target_top_left[0]) / target_pixel_size[0]), target_width)
+            clipped_x_max = min(
+                int((x_max_meter - target_top_left[0]) / target_pixel_size[0]),
+                target_width,
+            )
             clipped_y_min = max(int((target_top_left[1] - y_min_meter) / target_pixel_size[1]), 0)
-            clipped_y_max = min(int((target_top_left[1] - y_max_meter) / target_pixel_size[1]), target_height)
+            clipped_y_max = min(
+                int((target_top_left[1] - y_max_meter) / target_pixel_size[1]),
+                target_height,
+            )
 
             clipped_annotation = deepcopy(annotation)
             clipped_annotation["bbox"] = [

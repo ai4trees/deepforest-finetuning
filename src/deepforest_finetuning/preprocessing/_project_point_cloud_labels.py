@@ -9,7 +9,11 @@ from pathlib import Path
 import numpy as np
 from pointtorch import read
 from pointtorch.operations.numpy import make_labels_consecutive
-from pointtree.operations import cloth_simulation_filtering, create_digital_terrain_model, distance_to_dtm
+from pointtree.operations import (
+    cloth_simulation_filtering,
+    create_digital_terrain_model,
+    distance_to_dtm,
+)
 import rasterio
 from rasterio.transform import from_origin
 from skimage.filters.rank import modal
@@ -85,7 +89,8 @@ def project_point_cloud_labels(  # pylint: disable=too-many-locals, too-many-sta
         label_image = np.zeros(label_image_shape, dtype=np.int64)
 
         valid_mask = np.logical_and(
-            (pixel_indices >= 0).all(axis=-1), (pixel_indices < np.flip(label_image_shape)).all(axis=-1)
+            (pixel_indices >= 0).all(axis=-1),
+            (pixel_indices < np.flip(label_image_shape)).all(axis=-1),
         )
 
         pixel_indices = pixel_indices[valid_mask]
@@ -116,7 +121,9 @@ def project_point_cloud_labels(  # pylint: disable=too-many-locals, too-many-sta
         )
 
         max_height, max_indices = scatter_max(
-            torch.from_numpy(dist_to_dtm), torch.from_numpy(inverse_indices).long(), dim=-1
+            torch.from_numpy(dist_to_dtm),
+            torch.from_numpy(inverse_indices).long(),
+            dim=-1,
         )
 
         instance_ids = valid_point_cloud["instance_id_prediction"].to_numpy()[max_indices.cpu().numpy()]
@@ -182,7 +189,13 @@ def project_point_cloud_labels(  # pylint: disable=too-many-locals, too-many-sta
                 continue
 
             bounding_box = [x_min, y_min, width, height]
-            annotation = {"id": next_id, "image_id": 0, "category_id": 0, "iscrowd": 0, "bbox": bounding_box}
+            annotation = {
+                "id": next_id,
+                "image_id": 0,
+                "category_id": 0,
+                "iscrowd": 0,
+                "bbox": bounding_box,
+            }
             annotation["segmentation"] = coco_bbox_to_polygon(bounding_box)
             annotations.append(annotation)
             next_id += 1
@@ -195,9 +208,17 @@ def project_point_cloud_labels(  # pylint: disable=too-many-locals, too-many-sta
             image_capture_date = ""
 
         coco_json = {
-            "info": {"year": "2024", "version": "1.0.0", "date_created": datetime.today().strftime("%Y-%m-%d")},
+            "info": {
+                "year": "2024",
+                "version": "1.0.0",
+                "date_created": datetime.today().strftime("%Y-%m-%d"),
+            },
             "licenses": [
-                {"id": 0, "name": "Attribution License", "url": "https://creativecommons.org/licenses/by/4.0/"}
+                {
+                    "id": 0,
+                    "name": "Attribution License",
+                    "url": "https://creativecommons.org/licenses/by/4.0/",
+                }
             ],
             "images": [
                 {

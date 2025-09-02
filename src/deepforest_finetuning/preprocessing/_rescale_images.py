@@ -39,7 +39,12 @@ def rescale_images(config: ImageRescalingConfig):  # pylint: disable=too-many-lo
 
             with rasterio.open(original_image_path) as src:
                 transform, width, height = calculate_default_transform(
-                    src.crs, src.crs, src.width, src.height, *src.bounds, resolution=target_resolution
+                    src.crs,
+                    src.crs,
+                    src.width,
+                    src.height,
+                    *src.bounds,
+                    resolution=target_resolution,
                 )
 
                 input_pixel_size = np.abs(np.array([src.transform[0], src.transform[4]], dtype=np.float64))
@@ -73,6 +78,7 @@ def rescale_images(config: ImageRescalingConfig):  # pylint: disable=too-many-lo
                 label_output_folder.mkdir(exist_ok=True, parents=True)
 
                 label_subfolders = [x for x in os.listdir(input_label_folder) if os.path.isdir(input_label_folder / x)]
+                label_subfolders.append(".")
                 for label_subfolder in label_subfolders:
                     label_file_name = f"{original_image_path.stem}_coco.json"
                     label_file = input_label_folder / label_subfolder / label_file_name
@@ -86,7 +92,11 @@ def rescale_images(config: ImageRescalingConfig):  # pylint: disable=too-many-lo
                     with open(label_file, "r", encoding="utf-8") as f:
                         coco_json = json.load(f)
 
-                    coco_json = rescale_coco_json(coco_json, target_image_path, source_image_path=original_image_path)
+                    coco_json = rescale_coco_json(
+                        coco_json,
+                        target_image_path,
+                        source_image_path=original_image_path,
+                    )
 
                     with open(target_label_path, "w", encoding="utf-8") as f:
                         json.dump(coco_json, f, indent=4)
