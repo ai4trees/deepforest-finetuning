@@ -1,0 +1,1 @@
+This folder contains several Jupyter notebooks that were used to create the tables and figures in the 3D GeoInfo paper.
